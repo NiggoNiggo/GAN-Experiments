@@ -1,0 +1,5 @@
+@startuml test
+class A
+class B
+A --> B
+@enduml

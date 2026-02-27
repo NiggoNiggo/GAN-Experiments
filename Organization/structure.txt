@@ -1,0 +1,26 @@
+GANs, cGANs
+\training
+    trainer.py
+\validation
+    fid.py
+    is.py
+    ...
+\loss_functions
+    BCE_normal.py
+    wgan_loss.py
+    least_square.py
+    ....
+\networks
+    \LSGAN
+        lsgan_discriminator.py
+        lsgan_generator.py
+    \normal
+        discriminator.py
+        generator.py
+    wgan_loss
+        wgan_discriminator.py
+        wgan_generator.py
+    ....
+\logging
+    logger.py
+
