@@ -16,9 +16,10 @@ class LinearGenerator(nn.Module):
         return self.model(x)
 
 
-class LinearDiscriminator(nn.Module)        :
+class LinearDiscriminator(nn.Module):
     def __init__(self, input_dim):
         super(LinearDiscriminator, self).__init__()
+        # use Sequential so submodules are registered and parameters are visible
         self.model = nn.Sequential(
             LinearLayer(input_dim, 512),
             LinearLayer(512, 256),
@@ -26,8 +27,17 @@ class LinearDiscriminator(nn.Module)        :
             nn.Linear(128, 1),
             nn.Sigmoid()
         )
-    def forward(self, x):
-        return self.model(x)
+
+    def forward(self, x, verbose:bool=False):
+        # simply pass through sequential module
+        out = self.model(x)
+        if verbose:
+            # if verbose we can print intermediate shapes by iterating manually
+            current = x
+            for layer in self.model:
+                current = layer(current)
+                print(f"After {layer.__class__.__name__}: X shape: {current.shape}")
+        return out
 
 
 if __name__ == "__main__":

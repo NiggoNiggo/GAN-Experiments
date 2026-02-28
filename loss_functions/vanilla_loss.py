@@ -1,7 +1,7 @@
 import torch 
 from torch import nn
 
-class VanillaGANLoss(nn.Module):
+class VanillaGANLoss:
     def __init__(self):
         super().__init__()
         self.loss = nn.BCEWithLogitsLoss()
@@ -18,3 +18,5 @@ class VanillaGANLoss(nn.Module):
     def gen_loss(self, fake_pred):
         targets = torch.ones_like(fake_pred)
         return self.loss(fake_pred, targets)
+
+        
