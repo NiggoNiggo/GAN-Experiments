@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import tqdm
 from testing.create_image import SampleNormalImages
+from architectures.init_weights import weights_init
+import torch
+
 
 class GANTrainer(ABC):
     def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim):
@@ -12,7 +15,7 @@ class GANTrainer(ABC):
         self.optim_disc = optim_disc_strat.build_optim(self.disc)
         self.latent_dim = latent_dim
 
-        
+        self.init_models()
         
     @abstractmethod
     def train_disc(self):
@@ -42,3 +45,17 @@ class GANTrainer(ABC):
             if epoch % 10 == 0:
                 self.image_plotter.plot_images_grid(16)
         return self.gen, self.disc
+
+    def init_models(self,**filenames):
+        if filenames:
+            for file in filenames:
+                if "gen" in file:
+                    self.gen.load_state_dict(torch.load(file))
+                if "disc" in file:
+                    self.disc.load_state_dict(torch.load(file))
+                    
+        else:
+            self.gen.apply(weights_init)
+            self.disc.apply(weights_init)
+                
+        
