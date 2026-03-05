@@ -1,6 +1,6 @@
 from .trainer import GANTrainer
 import torch
-from testing.create_image import SampleNormalImages
+from testing.create_image import SampleImages
 
 class VanillaGANTrainer(GANTrainer):
     def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,device="cuda"):
@@ -16,7 +16,7 @@ class VanillaGANTrainer(GANTrainer):
         self.optim_disc = optim_disc_strat.build_optim(self.disc)
 
         # create the image plotter now that generator has been moved to the correct device
-        self.image_plotter = SampleNormalImages(self.gen, self.latent_dim)
+        self.image_plotter = SampleImages(self.gen, self.latent_dim)
 
     def train_disc(self, real_data):
         batch_size, real, labels = self.ensure_correct_input(real_data)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-import tqdm
-from testing.create_image import SampleNormalImages
+from tqdm.auto import tqdm
+from testing.create_image import SampleImages
 from architectures.init_weights import weights_init
 import torch
 
@@ -36,8 +36,8 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
-        self.image_plotter = SampleNormalImages(self.gen,self.latent_dim)
-        for epoch in tqdm.tqdm(range(epochs)):
+        self.image_plotter = SampleImages(self.gen,self.latent_dim)
+        for epoch in tqdm(range(epochs)):
             for batch in self.data_loader:
                 d_loss, g_loss = self.train_step(batch)
 
@@ -48,12 +48,8 @@ class GANTrainer(ABC):
 
     def init_models(self,**filenames):
         if filenames:
-            for file in filenames:
-                if "gen" in file:
-                    self.gen.load_state_dict(torch.load(file))
-                if "disc" in file:
-                    self.disc.load_state_dict(torch.load(file))
-                    
+            self.gen.load_state_dict(torch.load(filenames["gen"]))
+            self.disc.load_state_dict(torch.load(filenames["disc"]))
         else:
             self.gen.apply(weights_init)
             self.disc.apply(weights_init)

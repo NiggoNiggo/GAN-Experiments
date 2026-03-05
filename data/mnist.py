@@ -8,8 +8,8 @@ transform = transforms.Compose([
 ])
 
 
-train_data = MNIST(r"C:\data_sets",train=True,download=True,transform=transforms)
-test_data = MNIST(r"C:\data_sets",train=False,download=True,transform=transforms)
+train_data = MNIST(r"C:\data_sets",train=True,download=True,transform=transform)
+test_data = MNIST(r"C:\data_sets",train=False,download=True,transform=transform)
 
 if __name__ == "__main__":
     x,y = next(iter(train_data))

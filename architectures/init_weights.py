@@ -1,11 +1,12 @@
 import torch.nn as nn
 
 def weights_init(m):
-    classname = m.__class__.__name__
-
-    if classname.find("Conv") != -1:
+    if isinstance(m, nn.Conv2d):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
 
-    elif classname.find("BatchNorm") != -1:
+    elif isinstance(m, nn.ConvTranspose2d):
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+
+    elif isinstance(m, nn.BatchNorm2d):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
