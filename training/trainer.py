@@ -1,12 +1,22 @@
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
-from testing.create_image import SampleImages
 from architectures.init_weights import weights_init
 import torch
 
 
 class GANTrainer(ABC):
     def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim):
+        """Abstract class for Training procedure of gan
+
+        Args:
+            gen (torch.nn.Module): Generator Network
+            disc (torch.nn.Module): Discriminator Network
+            data_loader (torch.utils.data.DataLoader): Data loader
+            loss_fn (Loss_fn): Loss function
+            optim_gen_strat (optim_strat): Strategy of the optimizer for generator
+            optim_disc_strat (optim_strat): Strategy of the optimizer for discriminator
+            latent_dim (int): Latent dimension 
+        """
         self.gen = gen
         self.disc = disc 
         self.data_loader = data_loader
@@ -36,14 +46,11 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
-        self.image_plotter = SampleImages(self.gen,self.latent_dim)
         for epoch in tqdm(range(epochs)):
             for batch in self.data_loader:
                 d_loss, g_loss = self.train_step(batch)
 
             print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
-            if epoch % 10 == 0:
-                self.image_plotter.plot_images_grid(16)
         return self.gen, self.disc
 
     def init_models(self,**filenames):

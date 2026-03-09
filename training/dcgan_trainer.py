@@ -1,6 +1,5 @@
 from .trainer import GANTrainer
 import torch
-from testing.create_image import SampleImages
 
 class DCGANTrainer(GANTrainer):
     def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,device="cuda"):

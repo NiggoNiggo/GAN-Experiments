@@ -1,12 +1,18 @@
 from .layers import ConvLayer, ConvTransposeLayer
 from torch import nn
+import torch
 import math
 
 
-class DCGANGenerator(nn.Module):
-    def __init__(self, out_shape, out_channels: int, latent_dim: int):
+class ConditonalDCGANGenerator(nn.Module):
+    def __init__(self, 
+                out_shape: int,
+                out_channels: int,
+                latent_dim: int,
+                num_classes: int):
         super().__init__()
-
+        #num classes 
+        self.label_emb = nn.Embedding(num_classes, num_classes)
         # Anzahl der Layer bis out_shape von 1x1
         num_layers = int(math.log2(out_shape)) - 1  # z.B. 32 -> 5 Layer
 
@@ -16,12 +22,11 @@ class DCGANGenerator(nn.Module):
         in_dims = [latent_dim] + [start_channels // (2**i) for i in range(num_layers-1)]
         out_dims = [start_channels // (2**i) for i in range(num_layers-1)] + [out_channels]
 
-        print("Generator in/out dims:", in_dims, out_dims)
 
         self.model = []
         for k in range(len(in_dims)):
             layer = ConvTransposeLayer(
-                input_dim=in_dims[k],
+                input_dim=in_dims[k] + num_classes if k == 0 else in_dims[k],
                 output_dim=out_dims[k],
                 kernel_size=4,
                 stride=2,
@@ -32,23 +37,28 @@ class DCGANGenerator(nn.Module):
 
         self.model = nn.Sequential(*self.model)
 
-    def forward(self, x):
+    def forward(self, x,labels):
+        labels = self.label_emb(labels)
+        labels = labels.unsqueeze(2).unsqueeze(3)
+        x = torch.cat([x,labels],dim=1)
         return self.model(x)
 
 
-class DCGANDiscriminator(nn.Module):
-    def __init__(self,out_shape,in_channels):
+class ConditionalDCGANDiscriminator(nn.Module):
+    def __init__(self,
+                 out_shape: int,
+                 in_channels: int,
+                 num_classes: int):
         super().__init__()
+        self.out_shape = out_shape
+        #embedding for labels
+        self.label_emb = torch.nn.Embedding(num_classes,num_classes)
         self.model = []
         #computes the amount of layers to append to the desired out shape
         num_layers = int(math.log2(out_shape))
         #create the in dimensions with start 64 and increase the power of 2
         in_dims = [in_channels] + [2**(6+n) for n in range(num_layers-1)]
         out_dims = [2**(6+n) for n in range(num_layers-1)] + [1]
-        print("out dims: ", out_dims)
-        print("in dims: ", in_dims)
-        print(num_layers)
-        print(len(in_dims),len(out_dims))
         #assert that in and out dims have the same amout of values
         assert len(in_dims) == len(out_dims)
         #assert that in_channels have equally values containing as num layers' length
@@ -61,7 +71,7 @@ class DCGANDiscriminator(nn.Module):
         for k in range(num_layers):
             output_dim = out_dims[k] if k < num_layers-1 else in_channels
             layer = ConvLayer(
-                input_dim=in_dims[k],
+                input_dim=in_dims[k] + num_classes if k == 0 else in_dims[k],
                 output_dim=output_dim,
                 kernel_size=2 if k == num_layers-1 else 4,
                 stride=2,
@@ -75,7 +85,11 @@ class DCGANDiscriminator(nn.Module):
         self.model = nn.Sequential(*self.model)
         
         
-    def forward(self,x):
+    def forward(self,x,labels):
+        labels = self.label_emb(labels)
+        labels = labels.unsqueeze(2).unsqueeze(3)
+        labels = labels.repeat(1,1,self.out_shape,self.out_shape)
+        x = torch.cat([x,labels],dim=1)
         return self.model(x)
 
 
@@ -83,23 +97,23 @@ if __name__ == "__main__":
     import torch
     # Testing the Generator
     print(f"Test Generator: create Noise and propagate it in the Generator, if worked output shapes of z and Fake are shown....")
-    
-    channels = 3
+    labels = 10
+    channels = 1
     z = torch.randn((64,100,1,1))
+    classes = torch.randint(0,labels,(64,))
     out_shape = 64
-    gen = DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100)
-    fake = gen(z)
+    gen = ConditonalDCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100,num_classes=labels)
+    fake = gen(z,classes)
     print(f"Z: {z.shape}, Fake: {fake.shape}")
     # Testing the Discriminator
     print(f"Test Discriminator: create Noise with batchsize (because if not batchsize is propagated the network crashes due to batchnorm) and propagate it in the Discriminator, if worked output shapes of noise and discriminator output are shown....")
     
-    # in_dims = [channels,64,128,256]
-    # out_dims = [64,128,256,1]
-    disc = DCGANDiscriminator(out_shape=out_shape,in_channels=channels)
+
+    disc = ConditionalDCGANDiscriminator(out_shape=out_shape,in_channels=channels,num_classes=labels)
     noise = torch.randn((64,channels,out_shape,out_shape))
     print("Noise ", noise.shape)
     
-    disc_out = disc(noise)
+    disc_out = disc(noise,classes)
     
     print(f"Fake shape: {fake.shape}, Disc Out shape: {disc_out.shape}")
   
