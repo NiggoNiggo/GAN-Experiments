@@ -1,3 +1,7 @@
+import os
+
+import torch
+
 from training.vanilla_trainer import VanillaGANTrainer
 from training.dcgan_trainer import DCGANTrainer
 from training.cgan_trainier import ConditionalDCGANTrainer
@@ -10,8 +14,9 @@ from data.mnist import mnist_train, mnist_test
 from data.celebA import celeb_dataset
 from data.wrappers import DataWrapper
 from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampler, ConvGANImageSampler
+from observer.observer_save import ModelSaver
+from observer.observer_plot_values import PlotObserver
 
-import torch
 
 #Vanilla Linear GAN Trainer:
 
@@ -55,15 +60,29 @@ out_shape = 32
 channels = 1
 latent_dim = 100
 num_classes = 10
+save_path = "D:\DeepLearning_Results"
+filename = "test_cgan"
+csv_values = "csv_values"
+
+full_test_path = os.path.join(save_path,filename)
 
 training = ConditionalDCGANTrainer(
+    save_path=save_path,
+    filename=filename,
     gen=ConditonalDCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim,num_classes=num_classes),
     disc=ConditionalDCGANDiscriminator(out_shape=out_shape,in_channels=channels,num_classes=10),
     data_loader=torch.utils.data.DataLoader(DataWrapper(mnist_train,has_labels=True),batch_size=128,shuffle=True),
     loss_fn=VanillaGANLoss(),
     optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
     optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    latent_dim=100)
+    latent_dim=100,
+    
+)
+
+training.attach(ModelSaver(save_path=full_test_path))
+training.attach(PlotObserver(full_test_path,filename=csv_values))
+# training.attach(SampleLogger(sample_path="./samples"))
+
 
 gen, disc = training.train(10)
 

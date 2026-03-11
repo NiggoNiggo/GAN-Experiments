@@ -3,8 +3,8 @@ import torch
 # from testing.create_image import ConditionalGANImageSampler
 
 class ConditionalDCGANTrainer(GANTrainer):
-    def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,device="cuda"):
-        super().__init__(gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim)
+    def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,save_path,filename,device="cuda"):
+        super().__init__(gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim,save_path=save_path,filename=filename)
         self.latent_dim = latent_dim
         self.device = device
         self.verbose = False #default False
