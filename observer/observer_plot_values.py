@@ -20,13 +20,17 @@ class PlotObserver(Observer):
     
     def real_previous_data(self):
         #if a instance of this training was done before the existing data frame with infos about training is loaded 
-        if os.path.exists(os.path.join(self.path,self.filename,".csv")):
-            return pd.read_csv(self.path)
+        file = os.path.join(self.path,self.filename)
+        if os.path.exists(file): #filename should be send to trainer, because, then he knows which epoch to start and extend the training every time
+            print(f"initially read csv values from file: {self.filename}")
+            return pd.read_csv(file)
         else:
             #return an empty data frame 
             return pd.DataFrame()
     
-    def update(self, info):
+    def update(self, 
+               info : dict):
+        #have a closer look at overwriting or if the system is save the values correctly in the csv file
         valid_keys = ["epoch", "loss_g", "loss_d", "fid"]
 
         filtered = {k: v for k, v in info.items() if k in valid_keys}
@@ -34,4 +38,6 @@ class PlotObserver(Observer):
         new_data = pd.DataFrame([filtered])
         self.all_data = pd.concat([self.all_data, new_data], ignore_index=True)
         self.all_data.to_csv(os.path.join(self.path,self.filename), index=False)
+        
+        #enter a overwriting logic here
         

@@ -16,6 +16,7 @@ from data.wrappers import DataWrapper
 from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampler, ConvGANImageSampler
 from observer.observer_save import ModelSaver
 from observer.observer_plot_values import PlotObserver
+from plotting.loss_plotting import Plotting
 
 
 #Vanilla Linear GAN Trainer:
@@ -62,7 +63,7 @@ latent_dim = 100
 num_classes = 10
 save_path = "D:\DeepLearning_Results"
 filename = "test_cgan"
-csv_values = "csv_values"
+csv_values = "values_csv"
 
 full_test_path = os.path.join(save_path,filename)
 
@@ -84,7 +85,10 @@ training.attach(PlotObserver(full_test_path,filename=csv_values))
 # training.attach(SampleLogger(sample_path="./samples"))
 
 
-gen, disc = training.train(10)
+gen, disc = training.train(2)
+
+make_plots = Plotting(path=save_path,filename=filename)
+make_plots.plot_losses(show=True,save=True)
 
 images = ConditionalGANImageSampler(gen,latent_dim,num_classes=num_classes)
 imgs = images.sample_images(6*10)

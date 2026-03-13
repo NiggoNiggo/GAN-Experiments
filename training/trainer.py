@@ -43,6 +43,7 @@ class GANTrainer(ABC):
         #initilaize the model whehter normal distributed or with loading a filename
         self.filename = filename
         #filename comes from search from organizer and the filesystem
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.init_models()
         self.init_project()
         
@@ -100,4 +101,4 @@ class GANTrainer(ABC):
         for observer in self.observers:
             #transfer self because it is the trainer instance
             observer.update(info)
-        
+        #heir vlt den trainer doch immer übergeben?
