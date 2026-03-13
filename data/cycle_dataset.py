@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from PIL import Image
 import os
+import torchvision.transforms as transforms
 
 
 class CycleDataset(Dataset):
@@ -13,7 +14,15 @@ class CycleDataset(Dataset):
         self.files_A = os.listdir(path_A)
         self.files_B = os.listdir(path_B)
 
-        self.transform = transform
+        #change this into more flexible for increasing the resolution of cyclegan
+        self.transform = transforms.Compose([
+            transforms.Resize(286),
+            transforms.RandomCrop(256),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5),
+                                (0.5, 0.5, 0.5))
+        ])
 
     def __len__(self):
         return max(len(self.files_A), len(self.files_B))

@@ -5,17 +5,21 @@ import torch
 from training.vanilla_trainer import VanillaGANTrainer
 from training.dcgan_trainer import DCGANTrainer
 from training.cgan_trainier import ConditionalDCGANTrainer
+from training.CycleTrainer import CycleGANTrainer
 from architectures.linear_networks import LinearDiscriminator, LinearGenerator
 from architectures.dcgan_networks import DCGANDiscriminator, DCGANGenerator
 from architectures.cgan_networks import ConditionalDCGANDiscriminator, ConditonalDCGANGenerator
-from param_configs.optimizer_factory import AdamStrategy
+from architectures.cycle_networks import CycleDiscriminator, CycleGenerator
+from param_configs.optimizer_factory import AdamStrategy,CycleStrategy
 from loss_functions.vanilla_loss import VanillaGANLoss
 from data.mnist import mnist_train, mnist_test
 from data.celebA import celeb_dataset
 from data.wrappers import DataWrapper
+from data.cycle_dataset import CycleDataset
 from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampler, ConvGANImageSampler
 from observer.observer_save import ModelSaver
 from observer.observer_plot_values import PlotObserver
+from observer.observer_cycleGAN import CycleGANImageObserver
 from plotting.loss_plotting import Plotting
 
 
@@ -56,40 +60,76 @@ from plotting.loss_plotting import Plotting
 # sample.sample_images(64)
 
 
-#Conditional Trainer
-out_shape = 32
-channels = 1
+# #Conditional Trainer
+# out_shape = 32
+# channels = 1
+# latent_dim = 100
+# num_classes = 10
+# save_path = "D:\DeepLearning_Results"
+# filename = "test_cgan"
+# csv_values = "values_csv"
+
+# full_test_path = os.path.join(save_path,filename)
+
+# training = ConditionalDCGANTrainer(
+#     save_path=save_path,
+#     filename=filename,
+#     gen=ConditonalDCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim,num_classes=num_classes),
+#     disc=ConditionalDCGANDiscriminator(out_shape=out_shape,in_channels=channels,num_classes=10),
+#     data_loader=torch.utils.data.DataLoader(DataWrapper(mnist_train,has_labels=True),batch_size=128,shuffle=True),
+#     loss_fn=VanillaGANLoss(),
+#     optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+#     optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+#     latent_dim=100,
+    
+# )
+
+# training.attach(ModelSaver(save_path=full_test_path))
+# training.attach(PlotObserver(full_test_path,filename=csv_values))
+# # training.attach(SampleLogger(sample_path="./samples"))
+
+
+# gen, disc = training.train(2)
+
+# make_plots = Plotting(path=save_path,filename=filename)
+# make_plots.plot_losses(show=True,save=True)
+
+# images = ConditionalGANImageSampler(gen,latent_dim,num_classes=num_classes)
+# imgs = images.sample_images(6*10)
+# images.plot_images_grid(imgs,60,nrow=6)
+
+
+
+
+#-----CycleGAN
 latent_dim = 100
-num_classes = 10
 save_path = "D:\DeepLearning_Results"
-filename = "test_cgan"
+filename = "test_cyclegan"
 csv_values = "values_csv"
+path_A = r"D:\Datasets\Zebra_Horse\trainA"
+path_B = r"D:\Datasets\Zebra_Horse\trainB"
 
 full_test_path = os.path.join(save_path,filename)
 
-training = ConditionalDCGANTrainer(
-    save_path=save_path,
-    filename=filename,
-    gen=ConditonalDCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim,num_classes=num_classes),
-    disc=ConditionalDCGANDiscriminator(out_shape=out_shape,in_channels=channels,num_classes=10),
-    data_loader=torch.utils.data.DataLoader(DataWrapper(mnist_train,has_labels=True),batch_size=128,shuffle=True),
+
+data_loader = torch.utils.data.DataLoader(
+    CycleDataset(path_A=path_A, path_B=path_B, transform=None),
+    batch_size=4,
+    shuffle=True)
+
+
+training = CycleGANTrainer(
+    G_AB=CycleGenerator(),
+    G_BA=CycleGenerator(),
+    D_A=CycleDiscriminator(),
+    D_B=CycleDiscriminator(),
+    data_loader=data_loader,
     loss_fn=VanillaGANLoss(),
-    optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+    optim_strat=CycleStrategy(lr=0.0002, betas=(0.5, 0.999)),
     latent_dim=100,
+    save_path=save_path,
+    filename=filename
+)    
+training.attach(CycleGANImageObserver())
     
-)
-
-training.attach(ModelSaver(save_path=full_test_path))
-training.attach(PlotObserver(full_test_path,filename=csv_values))
-# training.attach(SampleLogger(sample_path="./samples"))
-
-
-gen, disc = training.train(2)
-
-make_plots = Plotting(path=save_path,filename=filename)
-make_plots.plot_losses(show=True,save=True)
-
-images = ConditionalGANImageSampler(gen,latent_dim,num_classes=num_classes)
-imgs = images.sample_images(6*10)
-images.plot_images_grid(imgs,60,nrow=6)
+training.train(50)

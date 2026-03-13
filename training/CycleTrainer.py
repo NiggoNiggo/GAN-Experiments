@@ -1,5 +1,10 @@
 from .trainer import GANTrainer
 import torch
+import os
+from itertools import chain
+import matplotlib.pyplot as plt
+from architectures.init_weights import weights_init
+
 
 
 class CycleGANTrainer(GANTrainer):
@@ -20,6 +25,10 @@ class CycleGANTrainer(GANTrainer):
         self.G_BA = G_BA
         self.D_A = D_A
         self.D_B = D_B
+        
+        self.optim_gen = optim_strat.build_optim(self.G_AB,self.G_BA)
+        self.optim_disc = optim_strat.build_optim(self.D_A,self.D_B)
+        
 
         super().__init__(
             gen=None,
@@ -32,18 +41,28 @@ class CycleGANTrainer(GANTrainer):
             save_path=save_path,
             filename=filename
         )
+        self.G_AB.to(self.device)
+        self.G_BA.to(self.device)
+        self.D_A.to(self.device)
+        self.D_B.to(self.device)
+        
     
     def train_disc(self, real_A, real_B, fake_A, fake_B):
 
         self.optim_disc.zero_grad()
 
-        loss_D_A_real = self.loss_fn(self.D_A(real_A), torch.ones_like(self.D_A(real_A)))
-        loss_D_A_fake = self.loss_fn(self.D_A(fake_A.detach()), torch.zeros_like(self.D_A(fake_A)))
+        # Discriminator predictions
+        pred_real_A = self.D_A(real_A)
+        pred_fake_A = self.D_A(fake_A.detach())
 
-        loss_D_B_real = self.loss_fn(self.D_B(real_B), torch.ones_like(self.D_B(real_B)))
-        loss_D_B_fake = self.loss_fn(self.D_B(fake_B.detach()), torch.zeros_like(self.D_B(fake_B)))
+        pred_real_B = self.D_B(real_B)
+        pred_fake_B = self.D_B(fake_B.detach())
 
-        loss_D = (loss_D_A_real + loss_D_A_fake + loss_D_B_real + loss_D_B_fake) * 0.5
+        # Loss über deine Lossklasse
+        loss_D_A = self.loss_fn.disc_loss(pred_real_A, pred_fake_A)
+        loss_D_B = self.loss_fn.disc_loss(pred_real_B, pred_fake_B)
+
+        loss_D = 0.5 * (loss_D_A + loss_D_B)
 
         loss_D.backward()
         self.optim_disc.step()
@@ -60,9 +79,13 @@ class CycleGANTrainer(GANTrainer):
         cycle_A = self.G_BA(fake_B)
         cycle_B = self.G_AB(fake_A)
 
-        # GAN Loss
-        loss_G_AB = self.loss_fn(self.D_B(fake_B), torch.ones_like(self.D_B(fake_B)))
-        loss_G_BA = self.loss_fn(self.D_A(fake_A), torch.ones_like(self.D_A(fake_A)))
+        # Discriminator predictions
+        pred_fake_B = self.D_B(fake_B)
+        pred_fake_A = self.D_A(fake_A)
+
+        # GAN Loss über deine Klasse
+        loss_G_AB = self.loss_fn.gen_loss(pred_fake_B)
+        loss_G_BA = self.loss_fn.gen_loss(pred_fake_A)
 
         # Cycle Loss
         loss_cycle_A = torch.nn.functional.l1_loss(cycle_A, real_A)
@@ -75,8 +98,8 @@ class CycleGANTrainer(GANTrainer):
         id_B = self.G_AB(real_B)
 
         loss_id = (
-            torch.nn.functional.l1_loss(id_A, real_A) +
-            torch.nn.functional.l1_loss(id_B, real_B)
+            torch.nn.functional.l1_loss(id_A, real_A)
+            + torch.nn.functional.l1_loss(id_B, real_B)
         )
 
         loss_G = loss_G_AB + loss_G_BA + 10 * loss_cycle + 5 * loss_id
@@ -97,5 +120,16 @@ class CycleGANTrainer(GANTrainer):
         d_loss = self.train_disc(real_A, real_B, fake_A, fake_B)
 
         g_loss = self.train_gen(real_A, real_B)
-
         return d_loss, g_loss
+
+    def init_models(self,**filenames):
+        if filenames:
+            self.gen.load_state_dict(torch.load(filenames["gen"]))
+            self.disc.load_state_dict(torch.load(filenames["disc"]))
+        else:
+            self.G_AB.apply(weights_init)
+            self.G_BA.apply(weights_init)
+            self.D_A.apply(weights_init)
+            self.D_B.apply(weights_init)
+
+

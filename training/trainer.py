@@ -33,8 +33,10 @@ class GANTrainer(ABC):
         self.disc = disc 
         self.data_loader = data_loader
         self.loss_fn = loss_fn
-        self.optim_gen = optim_gen_strat.build_optim(self.gen)
-        self.optim_disc = optim_disc_strat.build_optim(self.disc)
+        #ensure that no network is None, because more complex gans like cyclegan initiate their own gens and disc and set them to zero
+        if self.gen and self.disc:
+            self.optim_gen = optim_gen_strat.build_optim(self.gen)
+            self.optim_disc = optim_disc_strat.build_optim(self.disc)
         self.latent_dim = latent_dim
         #where the data is initilized
         self.save_path = save_path
@@ -73,7 +75,8 @@ class GANTrainer(ABC):
             info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
             self.notify(info)
             print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
-        return self.gen, self.disc
+        # return self.gen, self.disc
+        #without return if you want to acces the models go for: training.gen etc.
 
     def init_project(self):
         file = FileOrganizer(filename=self.filename,
