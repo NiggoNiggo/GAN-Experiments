@@ -1,4 +1,6 @@
 import os
+import matplotlib
+matplotlib.use('Agg')
 
 import torch
 
@@ -103,21 +105,21 @@ if __name__ == "__main__":
 
     #-----CycleGAN
     latent_dim = 100
-    save_path = "D:\DeepLearning_Results"
+    save_path = r"D:\DeepLearning_Results"
     filename = "test_cyclegan"
     csv_values = "values_csv"
-    path_A = r"D:\Datasets\Zebra_Horse\trainA"
-    path_B = r"D:\Datasets\Zebra_Horse\trainB"
+    path_A = r"D:\Datasets\Zebra_images\trainB"
+    path_B = r"D:\Datasets\Horse_images\trainA"
 
     full_test_path = os.path.join(save_path,filename)
 
 
     data_loader = torch.utils.data.DataLoader(
         CycleDataset(path_A=path_A, path_B=path_B, transform=None),
-        batch_size=4,
+        batch_size=1,
         shuffle=True,
-        pin_memory=True,
-        num_workers=4,
+        pin_memory=False,
+        num_workers=0,
         drop_last=True)
 
 

@@ -15,16 +15,30 @@ class CycleGANImageObserver:
         if epoch % self.interval != 0:
             return
 
-        batch = next(iter(trainer.data_loader))
-
         trainer.G_AB.eval()
         trainer.G_BA.eval()
 
+        # ----------- collect enough images independent of batch size -----------
+        real_As = []
+        real_Bs = []
+
+        data_iter = iter(trainer.data_loader)
+
+        while len(real_As) * trainer.data_loader.batch_size < self.num_images:
+            try:
+                batch = next(data_iter)
+            except StopIteration:
+                data_iter = iter(trainer.data_loader)
+                batch = next(data_iter)
+
+            real_As.append(batch["A"])
+            real_Bs.append(batch["B"])
+
+        real_A = torch.cat(real_As, dim=0)[:self.num_images].to(trainer.device)
+        real_B = torch.cat(real_Bs, dim=0)[:self.num_images].to(trainer.device)
+
+        # ----------- forward pass -----------
         with torch.no_grad():
-
-            real_A = batch["A"].to(trainer.device)[:self.num_images]
-            real_B = batch["B"].to(trainer.device)[:self.num_images]
-
             fake_B = trainer.G_AB(real_A)
             fake_A = trainer.G_BA(real_B)
 
@@ -38,9 +52,13 @@ class CycleGANImageObserver:
 
         import matplotlib.pyplot as plt
 
-        fig, axes = plt.subplots(self.num_images, 4, figsize=(10, 2*self.num_images))
+        num_images = self.num_images
 
-        for i in range(self.num_images):
+        fig, axes = plt.subplots(num_images, 4, figsize=(10, 2 * num_images))
+        if num_images == 1:
+            axes = axes.reshape(1, -1)
+
+        for i in range(num_images):
 
             imgs = [
                 real_A[i],
@@ -57,9 +75,7 @@ class CycleGANImageObserver:
             ]
 
             for j in range(4):
-
                 img = imgs[j].cpu().permute(1, 2, 0)
-
                 axes[i, j].imshow(img)
                 axes[i, j].set_title(titles[j])
                 axes[i, j].axis("off")

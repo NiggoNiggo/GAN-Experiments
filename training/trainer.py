@@ -1,3 +1,5 @@
+import os
+import re
 import torch
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
@@ -46,7 +48,6 @@ class GANTrainer(ABC):
         self.filename = filename
         #filename comes from search from organizer and the filesystem
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.init_models()
         self.init_project()
         
     @abstractmethod
@@ -84,14 +85,45 @@ class GANTrainer(ABC):
         #creates a full build for a new project
         file.create_dir()
 
-    def init_models(self,**filenames):
-        if filenames:
-            self.gen.load_state_dict(torch.load(filenames["gen"]))
-            self.disc.load_state_dict(torch.load(filenames["disc"]))
+    def init_models(self):
+        print("..... init models.....")
+        if os.path.exists(os.path.join(self.save_path,self.filename)):
+            path = os.path.join(self.save_path,self.filename,"models")
+            last_models = []
+            highest_idx = 0
+            #save all files in al list
+            all_files = os.listdir(path)                
+            epochs = [int(re.search(r"epoch_(\d+)", f).group(1)) for f in all_files if "epoch" in f]
+            if epochs:
+                highest_idx = max(epochs)
+            print(f"Previous Training will be continued at epoch: {highest_idx}")
+            for file in all_files:
+                match = re.search(fr"_epoch_{highest_idx}\.pkl", file)
+                if match:
+                    last_models.append(file)
+            print(last_models)
+            for model in last_models:
+                string_in_each_model = r"_epoch_\d+.pkl"
+                match = re.search(string_in_each_model,model)
+                if match:
+                    attr = model[:match.start()]
+                    if hasattr(self,attr):
+                        model_path = os.path.join(path,model)
+                        setattr(self,attr,torch.load(model_path,weights_only=True))
+                        print("Loaded: ", os.path.join(path,model))
+            print("Start training")
         else:
-            self.gen.apply(weights_init)
-            self.disc.apply(weights_init)
-    
+            print("make them normally distributed")
+            if hasattr(self, "G_AB"):
+                self.G_AB.apply(weights_init)
+                self.G_BA.apply(weights_init)
+                self.D_A.apply(weights_init)
+                self.D_B.apply(weights_init)
+            else:
+                self.gen.apply(weights_init)
+                self.disc.apply(weights_init)
+                        
+                        
     def attach(self,observer):
         #attach the observer to the Trainer 
         self.observers.append(observer)

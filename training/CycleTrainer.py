@@ -25,9 +25,8 @@ class CycleGANTrainer(GANTrainer):
         self.G_BA = G_BA
         self.D_A = D_A
         self.D_B = D_B
+        self.save_path = save_path  # Set save_path BEFORE init_models()
         
-        self.optim_gen = optim_strat.build_optim(self.G_AB,self.G_BA)
-        self.optim_disc = optim_strat.build_optim(self.D_A,self.D_B)
         
 
         super().__init__(
@@ -41,6 +40,13 @@ class CycleGANTrainer(GANTrainer):
             save_path=save_path,
             filename=filename
         )
+        
+        self.init_models()
+        
+        self.optim_gen = optim_strat.build_optim(self.G_AB,self.G_BA)
+        self.optim_disc = optim_strat.build_optim(self.D_A,self.D_B)
+        
+        
         self.G_AB.to(self.device)
         self.G_BA.to(self.device)
         self.D_A.to(self.device)
@@ -122,14 +128,49 @@ class CycleGANTrainer(GANTrainer):
         g_loss = self.train_gen(real_A, real_B)
         return d_loss, g_loss
 
-    def init_models(self,**filenames):
-        if filenames:
-            self.gen.load_state_dict(torch.load(filenames["gen"]))
-            self.disc.load_state_dict(torch.load(filenames["disc"]))
-        else:
-            self.G_AB.apply(weights_init)
-            self.G_BA.apply(weights_init)
-            self.D_A.apply(weights_init)
-            self.D_B.apply(weights_init)
+    # def init_models(self):
+    #     models_dir = os.path.join(self.save_path, "models")
+        
+    #     if os.path.exists(models_dir):
+    #         # Try to find and load the latest trained models
+    #         try:
+    #             # Find latest epoch
+    #             files = os.listdir(models_dir)
+    #             epochs = []
+    #             for f in files:
+    #                 if f.startswith("G_AB_epoch_"):
+    #                     epoch_num = int(f.replace("G_AB_epoch_", "").replace(".pkl", ""))
+    #                     epochs.append(epoch_num)
+                
+    #             if epochs:
+    #                 latest_epoch = max(epochs)
+    #                 G_AB_path = os.path.join(models_dir, f"G_AB_epoch_{latest_epoch}.pkl")
+    #                 G_BA_path = os.path.join(models_dir, f"G_BA_epoch_{latest_epoch}.pkl")
+    #                 D_A_path = os.path.join(models_dir, f"D_A_epoch_{latest_epoch}.pkl")
+    #                 D_B_path = os.path.join(models_dir, f"D_B_epoch_{latest_epoch}.pkl")
+                    
+    #                 if all(os.path.exists(p) for p in [G_AB_path, G_BA_path, D_A_path, D_B_path]):
+    #                     self.G_AB.load_state_dict(torch.load(G_AB_path))
+    #                     self.G_BA.load_state_dict(torch.load(G_BA_path))
+    #                     self.D_A.load_state_dict(torch.load(D_A_path))
+    #                     self.D_B.load_state_dict(torch.load(D_B_path))
+    #                     print(f"✓ Trained models loaded from epoch {latest_epoch}")
+    #                 else:
+    #                     raise FileNotFoundError("Not all model files found for the latest epoch")
+    #             else:
+    #                 raise FileNotFoundError("No trained models found")
+    #         except Exception as e:
+    #             print(f"Could not load trained models ({e}), initializing with random weights")
+    #             self.G_AB.apply(weights_init)
+    #             self.G_BA.apply(weights_init)
+    #             self.D_A.apply(weights_init)
+    #             self.D_B.apply(weights_init)
+    #     else:
+    #         # No models directory exists, initialize with random weights
+    #         print(f"Models directory not found ({models_dir}), initializing with random weights")
+    #         self.G_AB.apply(weights_init)
+    #         self.G_BA.apply(weights_init)
+    #         self.D_A.apply(weights_init)
+    #         self.D_B.apply(weights_init)
 
 
