@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')
 
 import torch
+from torchvision import transforms
 
 from training.vanilla_trainer import VanillaGANTrainer
 from training.dcgan_trainer import DCGANTrainer
@@ -15,7 +17,7 @@ from architectures.cycle_networks import CycleDiscriminator, CycleGenerator
 from param_configs.optimizer_factory import AdamStrategy,CycleStrategy
 from loss_functions.vanilla_loss import VanillaGANLoss
 from data.mnist import mnist_train, mnist_test
-from data.celebA import celeb_dataset
+from data.celebA import CelebADataset
 from data.wrappers import DataWrapper
 from data.cycle_dataset import CycleDataset
 from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampler, ConvGANImageSampler
@@ -43,23 +45,41 @@ if __name__ == "__main__":
     # sample.sample_images(64)
 
 
-    #DCGAN Trainer
-    # out_shape = 16
-    # channels = 3
-    # latent_dim = 100
+    # DCGAN Trainer
+    out_shape = 64
+    channels = 3
+    latent_dim = 100
 
-    # training = DCGANTrainer(
-    #     gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
-    #     disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
-    #     data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=128,shuffle=True),
-    #     loss_fn=VanillaGANLoss(),
-    #     optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    #     optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    #     latent_dim=100)
 
-    # gen, disc = training.train(100)
-    # sample = SampleImages(gen,100)
-    # sample.sample_images(64)
+
+    
+    transform = transforms.Compose([
+    transforms.Resize((64, 64)),      
+    transforms.ToTensor(),             
+    transforms.Normalize((0.5,), (0.5,), (0.5,))  
+    ])
+
+
+    path = r"/mnt/data2/datasets/celebA/img_align_celeba"
+
+    celeb_dataset = CelebADataset(path,transform)
+
+    training = DCGANTrainer(
+        gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
+        disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
+        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=128,shuffle=True),
+        loss_fn=VanillaGANLoss(),
+        optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+        optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+        latent_dim=100,
+        save_path=r"/mnt/data2/gan_results",
+        filename="dcgan_test")
+    training.attach(ModelSaver(save_path=r"/mnt/data2/gan_results/dcgan_test"))
+    training.attach(SampleLogger(sample_path=r"/mnt/data2/gan_results/dcgan_test/samples"))
+    gen, disc = training.train(100)
+    sample = ConvGANImageSampler(gen,100)
+    sample.sample_images(64)
+
 
 
     # #Conditional Trainer
@@ -71,7 +91,7 @@ if __name__ == "__main__":
     # filename = "test_cgan"
     # csv_values = "values_csv"
 
-    # full_test_path = os.path.join(save_path,filename)
+    # full_test_path = save_path / filename
 
     # training = ConditionalDCGANTrainer(
     #     save_path=save_path,
@@ -104,41 +124,42 @@ if __name__ == "__main__":
 
 
     #-----CycleGAN
-    latent_dim = 100
-    save_path = r"D:\DeepLearning_Results"
-    filename = "test_cyclegan"
-    csv_values = "values_csv"
-    path_A = r"D:\Datasets\Zebra_images\trainB"
-    path_B = r"D:\Datasets\Horse_images\trainA"
+    # latent_dim = 100
+    # save_path = Path(r"/mnt/data2/gan_results")
+    # filename = "test_cyclegan"
+    # csv_values = "values_csv"
+    # path_A = Path("/mnt/data2/datasets/zebra/trainB")
+    # path_B = Path("/mnt/data2/datasets/horse/trainA")
 
-    full_test_path = os.path.join(save_path,filename)
-
-
-    data_loader = torch.utils.data.DataLoader(
-        CycleDataset(path_A=path_A, path_B=path_B, transform=None),
-        batch_size=1,
-        shuffle=True,
-        pin_memory=False,
-        num_workers=0,
-        drop_last=True)
+    # full_test_path = save_path / filename
 
 
-    training = CycleGANTrainer(
-        G_AB=CycleGenerator(),
-        G_BA=CycleGenerator(),
-        D_A=CycleDiscriminator(),
-        D_B=CycleDiscriminator(),
-        data_loader=data_loader,
-        loss_fn=VanillaGANLoss(),
-        optim_strat=CycleStrategy(lr=0.0002, betas=(0.5, 0.999)),
-        latent_dim=100,
-        save_path=save_path,
-        filename=filename
-    )    
-    training.attach(CycleGANImageObserver())
-    training.attach(ModelSaver(full_test_path))
+    # data_loader = torch.utils.data.DataLoader(
+    #     CycleDataset(path_A=path_A, path_B=path_B, transform=None),
+    #     batch_size=1,
+    #     shuffle=True,
+    #     pin_memory=False,
+    #     num_workers=8,
+    #     drop_last=True)
+
+    # print(len(data_loader))
+
+    # training = CycleGANTrainer(
+    #     G_AB=CycleGenerator(),
+    #     G_BA=CycleGenerator(),
+    #     D_A=CycleDiscriminator(),
+    #     D_B=CycleDiscriminator(),
+    #     data_loader=data_loader,
+    #     loss_fn=VanillaGANLoss(),
+    #     optim_strat=CycleStrategy(lr=0.0002, betas=(0.5, 0.999)),
+    #     latent_dim=100,
+    #     save_path=save_path,
+    #     filename=filename
+    # )    
+    # training.attach(CycleGANImageObserver())
+    # training.attach(ModelSaver(full_test_path))
         
-    training.train(50)
+    # training.train(50)
     
     #loss plot observer adaption to cyclegan
     
@@ -148,3 +169,7 @@ if __name__ == "__main__":
     #experimente mit der latent dim machne mal
     #after SRGAN and dynamic cyclegan size
     #stackGAN auch implementieren
+
+
+
+    #rgbs anpassen

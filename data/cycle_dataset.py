@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from PIL import Image
 import os
+from pathlib import Path
 import torchvision.transforms as transforms
 
 
@@ -30,11 +31,11 @@ class CycleDataset(Dataset):
     def __getitem__(self, idx):
 
         img_A = Image.open(
-            os.path.join(self.path_A, self.files_A[idx % len(self.files_A)])
+            Path(self.path_A) / self.files_A[idx % len(self.files_A)]
         ).convert("RGB")
 
         img_B = Image.open(
-            os.path.join(self.path_B, self.files_B[idx % len(self.files_B)])
+            Path(self.path_B) / self.files_B[idx % len(self.files_B)]
         ).convert("RGB")
 
         if self.transform:

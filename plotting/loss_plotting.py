@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from pathlib import Path
 
 
 
@@ -16,7 +17,7 @@ class Plotting:
     
     def init_plotter(self):
         #read entire csv file, containing all informations 
-        values = pd.read_csv(os.path.join(self.path,self.filename,"values_csv", "values_csv.csv"),index_col=False)
+        values = pd.read_csv(Path(self.path) / self.filename / "values_csv" / "values_csv.csv",index_col=False)
         return values
     
     def update_values(self):
@@ -60,7 +61,7 @@ class Plotting:
                   fig,
                   name : str):
         #here now enter the saving algorithm
-        filename = os.path.join(self.path,self.filename,"plots",name)
+        filename = Path(self.path) / self.filename / "plots" / name
         fig.savefig(filename)
         
 

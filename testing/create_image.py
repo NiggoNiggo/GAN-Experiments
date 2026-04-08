@@ -15,7 +15,7 @@ class AbstractSampleImages(ABC):
     def sample_images(self, num_img: int):
         pass
 
-    def plot_images_grid(self, images, num_img: int, nrow: int = 4, normalize: bool = True):
+    def plot_images_grid(self, images, num_img: int, nrow: int = 4, normalize: bool = True, filename: str = "sample_grid.png"):
 
         grid = make_grid(images, nrow=nrow, normalize=normalize)
         np_grid = grid.permute(1, 2, 0).cpu().numpy()
@@ -23,7 +23,7 @@ class AbstractSampleImages(ABC):
         plt.figure(figsize=(nrow * 2, (num_img // nrow + 1) * 2))
         plt.imshow(np_grid.squeeze(), cmap='gray' if np_grid.shape[2] == 1 else None)
         plt.axis('off')
-        plt.savefig("test.png")
+        plt.savefig(filename)
         plt.close()
     
 

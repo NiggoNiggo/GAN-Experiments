@@ -2,6 +2,7 @@
 import torchvision.transforms as transforms
 import torch
 import os
+from pathlib import Path
 from PIL import Image
 
 class CelebADataset(torch.utils.data.Dataset):
@@ -11,8 +12,8 @@ class CelebADataset(torch.utils.data.Dataset):
         self.transforms = transforms
         self.path = path
         self.data = []
-        for r,d,f in os.walk(self.path):
-            self.data.extend([os.path.join(r,file) for file in f if file.endswith(".jpg")])
+        for r,d,f in os.walk(Path(self.path)):
+            self.data.extend([Path(r) / file for file in f if file.endswith(".jpg")])
         
     def __len__(self):
         return len(self.data)
@@ -21,16 +22,7 @@ class CelebADataset(torch.utils.data.Dataset):
         item = Image.open(self.data[idx])
         return self.transforms(item)
 
-transform = transforms.Compose([
-    transforms.Resize((16, 16)),      
-    transforms.ToTensor(),             
-    transforms.Normalize((0.5,), (0.5,), (0.5,))  
-    ])
 
-
-path = r"D:\Datasets\celebA\img_align_celeba"
-
-celeb_dataset = CelebADataset(path,transform)
 
 
 if __name__ == "__main__":

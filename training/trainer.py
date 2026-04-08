@@ -1,8 +1,10 @@
 import os
 import re
+from pathlib import Path
 import torch
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
+from testing.create_image import ConvGANImageSampler
 
 from architectures.init_weights import weights_init
 from organization.file_system_organizer import FileOrganizer
@@ -48,6 +50,7 @@ class GANTrainer(ABC):
         self.filename = filename
         #filename comes from search from organizer and the filesystem
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {self.device}")
         self.init_project()
         
     @abstractmethod
@@ -76,6 +79,9 @@ class GANTrainer(ABC):
             info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
             self.notify(info)
             print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
+            plotter = ConvGANImageSampler(self.gen, self.latent_dim)
+            imgs = plotter.sample_images(64)
+            plotter.plot_images_grid(imgs, num_img=64, nrow=8, normalize=True,filename=os.path.join(self.save_path,self.filename,"plots",f"epoch_{epoch}.png"))
         # return self.gen, self.disc
         #without return if you want to acces the models go for: training.gen etc.
 
@@ -87,8 +93,8 @@ class GANTrainer(ABC):
 
     def init_models(self):
         print("..... init models.....")
-        if os.path.exists(os.path.join(self.save_path,self.filename)):
-            path = os.path.join(self.save_path,self.filename,"models")
+        if (Path(self.save_path) / self.filename).exists():
+            path = Path(self.save_path) / self.filename / "models"
             last_models = []
             highest_idx = 0
             #save all files in al list
@@ -108,9 +114,9 @@ class GANTrainer(ABC):
                 if match:
                     attr = model[:match.start()]
                     if hasattr(self,attr):
-                        model_path = os.path.join(path,model)
+                        model_path = path / model
                         setattr(self,attr,torch.load(model_path,weights_only=True))
-                        print("Loaded: ", os.path.join(path,model))
+                        print("Loaded: ", path / model)
             print("Start training")
         else:
             print("make them normally distributed")

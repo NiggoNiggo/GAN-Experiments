@@ -1,9 +1,12 @@
+import os
 from .trainer import GANTrainer
 import torch
+from testing.create_image import ConvGANImageSampler
+
 
 class DCGANTrainer(GANTrainer):
-    def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,device="cuda"):
-        super().__init__(gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim)
+    def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,save_path,filename,device="cuda"):
+        super().__init__(gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim,save_path,filename)
         self.latent_dim = latent_dim
         self.device = device
         self.verbose = False #default False
@@ -49,5 +52,6 @@ class DCGANTrainer(GANTrainer):
         d_loss = self.train_disc(batch)
         batch_size, real, labels = self.ensure_correct_input(batch)
         g_loss = self.train_gen(batch_size)
+
 
         return d_loss, g_loss
