@@ -72,18 +72,17 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
-        for epoch in tqdm(range(epochs)):
+        for epoch in tqdm(range(self.epoch, self.epoch+epochs)):
+            self.epoch = epoch
             for batch in self.data_loader:
                 d_loss, g_loss = self.train_step(batch)
             #updating the info dict with each information that is saved from here now 
             info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
             self.notify(info)
             print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
-            plotter = ConvGANImageSampler(self.gen, self.latent_dim)
-            imgs = plotter.sample_images(64)
-            plotter.plot_images_grid(imgs, num_img=64, nrow=8, normalize=True,filename=os.path.join(self.save_path,self.filename,"plots",f"epoch_{epoch}.png"))
-        # return self.gen, self.disc
-        #without return if you want to acces the models go for: training.gen etc.
+
+    
+
 
     def init_project(self):
         file = FileOrganizer(filename=self.filename,
@@ -101,7 +100,10 @@ class GANTrainer(ABC):
             all_files = os.listdir(path)                
             epochs = [int(re.search(r"epoch_(\d+)", f).group(1)) for f in all_files if "epoch" in f]
             if epochs:
-                highest_idx = max(epochs)
+                highest_idx = max(epochs) +1
+                self.epoch = highest_idx
+            else:
+                self.epoch = 1
             print(f"Previous Training will be continued at epoch: {highest_idx}")
             for file in all_files:
                 match = re.search(fr"_epoch_{highest_idx}\.pkl", file)
@@ -110,13 +112,21 @@ class GANTrainer(ABC):
             print(last_models)
             for model in last_models:
                 string_in_each_model = r"_epoch_\d+.pkl"
-                match = re.search(string_in_each_model,model)
+                match = re.search(string_in_each_model, model)
+
                 if match:
                     attr = model[:match.start()]
-                    if hasattr(self,attr):
+
+                    if hasattr(self, attr):
                         model_path = path / model
-                        setattr(self,attr,torch.load(model_path,weights_only=True))
-                        print("Loaded: ", path / model)
+
+                        state_dict = torch.load(model_path, weights_only=True)
+
+                        model_obj = getattr(self, attr)
+                        model_obj.load_state_dict(state_dict)
+
+                        print("Loaded: ", model_path)
+
             print("Start training")
         else:
             print("make them normally distributed")
@@ -128,6 +138,7 @@ class GANTrainer(ABC):
             else:
                 self.gen.apply(weights_init)
                 self.disc.apply(weights_init)
+            self.epoch = 1
                         
                         
     def attach(self,observer):
@@ -142,4 +153,3 @@ class GANTrainer(ABC):
         for observer in self.observers:
             #transfer self because it is the trainer instance
             observer.update(info)
-        #heir vlt den trainer doch immer übergeben?

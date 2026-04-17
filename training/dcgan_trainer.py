@@ -17,6 +17,8 @@ class DCGANTrainer(GANTrainer):
         self.optim_gen = optim_gen_strat.build_optim(self.gen)
         self.optim_disc = optim_disc_strat.build_optim(self.disc)
 
+        self.init_models()
+
         # create the image plotter now that generator has been moved to the correct device
         # self.image_plotter = SampleImages(self.gen, self.latent_dim)
 
@@ -55,3 +57,7 @@ class DCGANTrainer(GANTrainer):
 
 
         return d_loss, g_loss
+    
+    def sample_images(self, num_img):
+        imgs = self.plotter.sample_images(64)
+        self.plotter.plot_images_grid(imgs, num_img=64, nrow=8, normalize=True,filename=os.path.join(self.save_path,self.filename,"plots",f"epoch_{self.epoch}.png"))

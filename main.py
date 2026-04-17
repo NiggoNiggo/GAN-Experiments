@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import matplotlib
+
+from observer.observer_make_plot_latent_gans import PlotLatentGANsObserver
 matplotlib.use('Agg')
 
 import torch
@@ -24,6 +26,7 @@ from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampl
 from observer.observer_save import ModelSaver
 from observer.observer_plot_values import PlotObserver
 from observer.observer_cycleGAN import CycleGANImageObserver
+from observer.observer_evaluation import EvalObserver
 from plotting.loss_plotting import Plotting
 
 if __name__ == "__main__":
@@ -54,28 +57,31 @@ if __name__ == "__main__":
 
     
     transform = transforms.Compose([
-    transforms.Resize((64, 64)),      
+    transforms.Resize((out_shape, out_shape)),      
     transforms.ToTensor(),             
     transforms.Normalize((0.5,), (0.5,), (0.5,))  
     ])
 
 
     path = r"/mnt/data2/datasets/celebA/img_align_celeba"
-
+    save_path = r"/mnt/data2/gan_results"
     celeb_dataset = CelebADataset(path,transform)
+    filename = "dcgan_test"
 
     training = DCGANTrainer(
         gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
         disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
-        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=128,shuffle=True),
+        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=128,shuffle=True,pin_memory=True,num_workers=8),
         loss_fn=VanillaGANLoss(),
         optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         latent_dim=100,
-        save_path=r"/mnt/data2/gan_results",
-        filename="dcgan_test")
+        save_path=save_path,
+        filename=filename)
     training.attach(ModelSaver(save_path=r"/mnt/data2/gan_results/dcgan_test"))
-    training.attach(SampleLogger(sample_path=r"/mnt/data2/gan_results/dcgan_test/samples"))
+    training.attach(EvalObserver())
+    training.attach(PlotObserver(path=os.path.join(save_path, filename),filename="values.csv"))
+    training.attach(PlotLatentGANsObserver(num_images=64))
     gen, disc = training.train(100)
     sample = ConvGANImageSampler(gen,100)
     sample.sample_images(64)
@@ -112,6 +118,7 @@ if __name__ == "__main__":
 
 
     # gen, disc = training.train(2)
+    # training.attach(PlotLatentGANsObserver(num_images=64))
 
     # make_plots = Plotting(path=save_path,filename=filename)
     # make_plots.plot_losses(show=True,save=True)
@@ -126,10 +133,10 @@ if __name__ == "__main__":
     #-----CycleGAN
     # latent_dim = 100
     # save_path = Path(r"/mnt/data2/gan_results")
-    # filename = "test_cyclegan"
+    # filename = "monet_photo_cycleGAN"
     # csv_values = "values_csv"
-    # path_A = Path("/mnt/data2/datasets/zebra/trainB")
-    # path_B = Path("/mnt/data2/datasets/horse/trainA")
+    # path_A = Path("/mnt/data2/datasets/monet/trainA")
+    # path_B = Path("/mnt/data2/datasets/photo/trainB")
 
     # full_test_path = save_path / filename
 
@@ -138,7 +145,7 @@ if __name__ == "__main__":
     #     CycleDataset(path_A=path_A, path_B=path_B, transform=None),
     #     batch_size=1,
     #     shuffle=True,
-    #     pin_memory=False,
+    #     pin_memory=True,
     #     num_workers=8,
     #     drop_last=True)
 
