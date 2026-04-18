@@ -1,72 +1,87 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import os
 from pathlib import Path
 
 
-
-#should get his data concurrently in the training for regulary plotting and should be able for plotting in the end and outside of the training 
 class Plotting:
-    def __init__(self,
-                 path:str,
-                 filename:str):
-        self.path = path
+    def __init__(self, path: str, filename: str):
+        self.path = Path(path)
         self.filename = filename
-        self.values = self.init_plotter()
-    
-    def init_plotter(self):
-        #read entire csv file, containing all informations 
-        values = pd.read_csv(Path(self.path) / self.filename / "values_csv" / "values_csv.csv",index_col=False)
-        return values
-    
-    def update_values(self):
-        #read the updated csv file
-        values = self.init_plotter()
-        #only if both dfs aren't equal return the new loaded df, otherwise pass
-        if not self.values.equals(values):
-            return values
-    
-    def plot_losses(self, save: bool, show: bool=True):
+
+        self.csv_path = self.path / self.filename / "values_csv" / "values_csv.csv"
+        self.plot_path = self.path / self.filename / "plots"
+
+        self.values = self._load_values()
+
+    # -------------------------
+    # Data handling
+    # -------------------------
+    def _load_values(self):
+        if not self.csv_path.exists():
+            raise FileNotFoundError(f"CSV not found: {self.csv_path}")
+
+        return pd.read_csv(self.csv_path, index_col=False)
+
+    def update_values(self, force: bool = False):
+        """
+        Call this after each epoch.
+        - force=True → always reload
+        - otherwise → reload only if changed
+        """
+        new_values = self._load_values()
+
+        if force or not self.values.equals(new_values):
+            self.values = new_values
+            return True  #
+
+        return False  
+
+    # -------------------------
+    # Plotting
+    # -------------------------
+    def plot_losses(self, save: bool = True, show: bool = True):
+        self.update_values(force=True)  # always use latest data
+
+        if "loss_g" not in self.values or "loss_d" not in self.values:
+            raise ValueError("CSV must contain 'loss_g' and 'loss_d' columns")
+
+        x = self.values["epoch"]
         loss_g = self.values["loss_g"]
         loss_d = self.values["loss_d"]
-        x = self.values["epoch"]
 
         fig, ax = plt.subplots()
 
         ax.plot(x, loss_d, label="Discriminator Loss")
         ax.plot(x, loss_g, label="Generator Loss")
 
-        ax.legend()
-        ax.grid()
         ax.set_xlabel("Epochs")
         ax.set_ylabel("Loss")
+        ax.legend()
+        ax.grid()
 
         if save:
-            self.save_plot(fig,"Loss_plot.png")
+            self.save_plot(fig, "Loss_plot.png")
 
         if show:
             plt.show()
 
         plt.close(fig)
-            
-            
-            
-            
-    
+
     def plot_metrics(self):
+        self.update_values(force=True)
+        # optional extension later
         pass
-    
-    def save_plot(self,
-                  fig,
-                  name : str):
-        #here now enter the saving algorithm
-        filename = Path(self.path) / self.filename / "plots" / name
-        fig.savefig(filename)
-        
+
+    # -------------------------
+    # Saving
+    # -------------------------
+    def save_plot(self, fig, name: str):
+        self.plot_path.mkdir(parents=True, exist_ok=True)
+        fig.savefig(self.plot_path / name)
 
 
-
-
+# -------------------------
+# Extension placeholder
+# -------------------------
 class PlottingCycleGAN(Plotting):
     pass

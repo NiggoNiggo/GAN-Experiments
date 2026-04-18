@@ -63,25 +63,31 @@ if __name__ == "__main__":
     ])
 
 
-    path = r"/mnt/data2/datasets/celebA/img_align_celeba"
-    save_path = r"/mnt/data2/gan_results"
+    path = Path("/mnt/data2/datasets/monet/trainA")
+    save_path = Path("/mnt/data2/gan_results")
     celeb_dataset = CelebADataset(path,transform)
-    filename = "dcgan_test"
+    filename = "dc_test2"
 
     training = DCGANTrainer(
         gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
         disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
-        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=128,shuffle=True,pin_memory=True,num_workers=8),
+        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=64,shuffle=True,pin_memory=True,num_workers=8),
         loss_fn=VanillaGANLoss(),
         optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         latent_dim=100,
         save_path=save_path,
         filename=filename)
-    training.attach(ModelSaver(save_path=r"/mnt/data2/gan_results/dcgan_test"))
+    training.attach(ModelSaver(save_path=save_path / filename))
     training.attach(EvalObserver())
     training.attach(PlotObserver(path=os.path.join(save_path, filename),filename="values.csv"))
     training.attach(PlotLatentGANsObserver(num_images=64))
+
+    # plotter = Plotting(path, filename)
+    # plot_observer = PlotObserver(plotter)
+    # training.attach(plot_observer)
+
+
     gen, disc = training.train(100)
     sample = ConvGANImageSampler(gen,100)
     sample.sample_images(64)

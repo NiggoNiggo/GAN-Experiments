@@ -20,13 +20,8 @@ class FID:
         
     @staticmethod
     def to_uint8(x):
-        # von [-1, 1] → [0, 1]
         x = (x + 1) / 2
-        
-        # clamp für Sicherheit
         x = x.clamp(0, 1)
-        
-        # → [0, 255] + dtype
         x = (x * 255).to(torch.uint8)
         
         return x
