@@ -12,7 +12,7 @@ class EvalObserver(Observer):
     def update(self,info):
         if info["epoch"] % 5 == 0:
             trainer = info['trainer']
-            num_samples = 5000 if len(trainer.data_loader.dataset) >= 5000 else len(trainer.data_loader.dataset)
+            num_samples = 10000 if len(trainer.data_loader.dataset) >= 10000 else len(trainer.data_loader.dataset)
             fid_eval = FID(trainer.data_loader, num_samples, trainer.device, trainer.data_loader.batch_size)
             gen = trainer.gen
             latent_dim = trainer.latent_dim

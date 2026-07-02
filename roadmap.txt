@@ -1,0 +1,63 @@
+1. **GAN** – *Generative Adversarial Nets* (Goodfellow et al., 2014) – Ursprüngliches GAN-Paper, führt Generator und Discriminator ein.
+
+2. **cGAN** – *Conditional Generative Adversarial Nets* (Mirza & Osindero, 2014) – GANs mit zusätzlicher Konditionierung über Labels oder andere Informationen.
+
+3. **DCGAN** – *Deep Convolutional Generative Adversarial Networks* (Radford et al., 2015) – Ersetzt MLPs durch CNNs und etabliert viele frühe GAN-Best-Practices.
+
+4. **LSGAN** – *Least Squares Generative Adversarial Networks* (Mao et al., 2017) – Ersetzt BCE durch Least-Squares-Loss zur Stabilisierung des Trainings.
+
+5. **WGAN** – *Wasserstein GAN* (Arjovsky et al., 2017) – Führt die Wasserstein-Distanz als Trainingsziel ein.
+
+6. **WGAN-GP** – *Improved Training of Wasserstein GANs* (Gulrajani et al., 2017) – Ersetzt Weight Clipping durch Gradient Penalty.
+
+7. **R1 / R2** – *Which Training Methods for GANs do actually Converge?* (Mescheder et al., 2018) – Regularisierung auf Real- bzw. Fake-Samples zur Stabilisierung.
+
+8. **SpectralNorm** – *Spectral Normalization for Generative Adversarial Networks* (Miyato et al., 2018) – Lipschitz-Kontrolle über Spektralnorm der Gewichtsmatrizen.
+
+9. **ResNetGAN** – ResNet-basierte Generatoren und Discriminatoren, populär durch WGAN-GP und spätere Arbeiten – Einführung von Residual-Blöcken in GAN-Architekturen.
+
+10. **HingeGAN** – Hinge-Loss-basierte GANs (u. a. Geometric GAN, später SAGAN/BigGAN) – Moderner Standard-Loss für viele GANs.
+
+11. **SAGAN** – *Self-Attention Generative Adversarial Networks* (Zhang et al., 2019) – Führt Self-Attention in GANs ein.
+
+12. **BigGAN** – *Large Scale GAN Training for High Fidelity Natural Image Synthesis* (Brock et al., 2019) – Große klassenkonditionierte ResNet-GANs mit Spectral Norm und Hinge Loss.
+
+13. **ProGAN** – *Progressive Growing of GANs for Improved Quality, Stability, and Variation* (Karras et al., 2018) – Progressives Hochskalieren der Bildauflösung während des Trainings.
+
+14. **StyleGAN** – *A Style-Based Generator Architecture for Generative Adversarial Networks* (Karras et al., 2019) – Führt Style-Modulation und Mapping Network ein.
+
+15. **StyleGAN2** – *Analyzing and Improving the Image Quality of StyleGAN* (Karras et al., 2020) – Entfernt AdaIN-Artefakte und führt Weight Demodulation ein.
+
+16. **StyleGAN2-ADA** – *Training Generative Adversarial Networks with Limited Data* (Karras et al., 2020) – Adaptive Data Augmentation für kleine Datensätze.
+
+17. **StyleGAN3** – *Alias-Free Generative Adversarial Networks* (Karras et al., 2021) – Behebt Alias-Effekte und verbessert Transformationstreue.
+
+18. **SRGAN** – *Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network* (Ledig et al., 2017) – Führt VGG-basierten Perceptual Loss ein.
+
+19. **ESRGAN** – *Enhanced Super-Resolution Generative Adversarial Networks* (Wang et al., 2018) – Verbessert SRGAN mit RRDB-Blöcken und besserem Perceptual Loss.
+
+20. **DiffAugment** – *Differentiable Augmentation for Data-Efficient GAN Training* (Zhao et al., 2020) – Differenzierbare Datenaugmentation direkt im GAN-Training.
+
+21. **BCR** – *Balanced Consistency Regularization for GANs* (Zhao et al., 2020) – Konsistenzregularisierung für stabileres Training.
+
+22. **zCR** – *Improved Consistency Regularization for GANs* (Zhao et al., 2020) – Konsistenzregularisierung im latenten Raum (*Latent Consistency Regularization*).
+
+23. **HingeRLC** – *Hinge Loss with Regularized Lipschitz Constraints* (2025) – Moderne Erweiterung des Hinge-Loss mit zusätzlicher Lipschitz-Regularisierung.
+
+24. **TransGAN** – *Two Transformers Can Make One Strong GAN* (Jiang et al., 2021) – Ersetzt CNNs vollständig durch Transformer-Blöcke.
+
+25. **GANformer** – *Network Transformer for Generative Adversarial Networks* (Hudson & Zitnick, 2021) – Transformer-basierte Generator-/Discriminator-Kommunikation über Attention.
+
+26. **StyleSwin** – *StyleSwin: Transformer-based GAN for High-resolution Image Generation* (Zhang et al., 2022) – Kombination aus StyleGAN-Ideen und Swin Transformer.
+
+27. **ContraD** – *Contrastive Discriminator for Stable GAN Training* (2021) – Verwendet kontrastives Lernen im Discriminator.
+
+28. **Projected GAN** – *Projected GANs Converge Faster* (Sauer et al., 2021) – Nutzt vortrainierte Feature-Projektionen für effizienteres Training.
+
+29. **GigaGAN** – *GigaGAN: Scaling up GANs for Text-to-Image Synthesis* (Kang et al., 2023) – Moderne großskalige GAN-Architektur für Text-zu-Bild-Generierung.
+
+30. **StyleGAN-T** – *Unlocking the Power of GANs for Fast Large-Scale Text-to-Image Synthesis* (2023) – StyleGAN-basierter Text-zu-Bild-Generator.
+
+31. **Consistency Regularization Family** – Sammlung moderner GAN-Regularisierungen (BCR, zCR, ICR etc.) – Fokus auf Stabilität und Daten-Effizienz.
+
+32. **Alias-Free / Equivariant GANs** – Erweiterungen von StyleGAN3 – Verbesserung geometrischer Konsistenz und Transformationsinvarianz.

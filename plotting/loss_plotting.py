@@ -8,7 +8,7 @@ class Plotting:
         self.path = Path(path)
         self.filename = filename
 
-        self.csv_path = self.path / self.filename / "values_csv" / "values_csv.csv"
+        self.csv_path = self.path / self.filename / "values_csv"  / "values_csv.csv"
         self.plot_path = self.path / self.filename / "plots"
 
         self.values = self._load_values()
@@ -17,9 +17,9 @@ class Plotting:
     # Data handling
     # -------------------------
     def _load_values(self):
+        print(self.csv_path)
         if not self.csv_path.exists():
             raise FileNotFoundError(f"CSV not found: {self.csv_path}")
-
         return pd.read_csv(self.csv_path, index_col=False)
 
     def update_values(self, force: bool = False):

@@ -13,7 +13,7 @@ class LinearLayer(nn.Module):
 
 
 class ConvLayer(nn.Module):
-    def __init__(self,input_dim,output_dim,kernel_size,stride,padding,batch_norm:bool=False,last_layer:bool=False):
+    def __init__(self,input_dim,output_dim,kernel_size,stride,padding,batch_norm:bool=True,last_layer:bool=False):
         super().__init__()
 
         self.model = [
@@ -23,6 +23,8 @@ class ConvLayer(nn.Module):
             self.model.append(nn.BatchNorm2d(output_dim))
         if not last_layer:
             self.model.append(nn.LeakyReLU(0.2,inplace=True))
+        else:
+            self.model.append(nn.Sigmoid())
         
         self.model = nn.Sequential(*self.model)
         
@@ -49,3 +51,10 @@ class ConvTransposeLayer(nn.Module):
         
     def forward(self,x):
         return self.model(x)
+    
+
+
+
+
+
+#für jedes GAN einen letzen Layer definieren

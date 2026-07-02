@@ -15,6 +15,7 @@ class FID:
         self.device = device
         self.batchsize = batchsize
         self.fid_metric = FrechetInceptionDistance(feature=2048).to(self.device)
+        self.real_features = self.eval_real_data()
   
 
         
@@ -26,21 +27,24 @@ class FID:
         
         return x
 
+    def eval_real_data(self):
+        current_samples = 0
+        all_real = []
+        for real_batch in self.real_dataloader:
+            real_batch = self.to_uint8(real_batch["x"])
+            current_samples += len(real_batch)
+            all_real.extend(real_batch)
+            remaining = self.num_samples - current_samples
+            if remaining <= 0:
+                break
+        return torch.stack(all_real,dim=0)[:self.num_samples]
 
 
     
     def evaluate_fid(self, generator, latent_dim):
-        self.fid_metric.reset()
-        generator.eval()
-        generator.to(self.device)
-        for real_batch in self.real_dataloader:
-            real_batch = self.to_uint8(real_batch["x"])
-            self.fid_metric.update(real_batch.to(self.device), real=True)
-
-
         with torch.no_grad():
             samples_generated = 0
-
+            #update fake images
             while samples_generated < self.num_samples:
                 current_batch_size = min(self.batchsize, self.num_samples - samples_generated)
                 noise = torch.randn(current_batch_size, latent_dim, 1,1, device=self.device)
@@ -48,8 +52,12 @@ class FID:
                 fake = self.to_uint8(fake)
                 self.fid_metric.update(fake.to(self.device), real=False)
                 samples_generated += current_batch_size
-
+        #update real images
+        for i in range(0, self.num_samples, self.batchsize):
+            batch_chunk = self.real_features[i:i + self.batchsize]
+            self.fid_metric.update(batch_chunk.to(self.device), real=True)
         fid_value = self.fid_metric.compute()
+        self.fid_metric.reset()
         generator.train()
         return fid_value.item()
             

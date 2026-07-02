@@ -37,11 +37,11 @@ class DCGANGenerator(nn.Module):
 
 
 class DCGANDiscriminator(nn.Module):
-    def __init__(self,out_shape,in_channels):
+    def __init__(self,out_shape,in_channels,net_type="lsgan"):
         super().__init__()
         self.model = []
         #computes the amount of layers to append to the desired out shape
-        num_layers = int(math.log2(out_shape))
+        num_layers = int(math.log2(out_shape)) -1
         #create the in dimensions with start 64 and increase the power of 2
         in_dims = [in_channels] + [2**(6+n) for n in range(num_layers-1)]
         out_dims = [2**(6+n) for n in range(num_layers-1)] + [1]
@@ -60,18 +60,25 @@ class DCGANDiscriminator(nn.Module):
         
         for k in range(num_layers):
             output_dim = out_dims[k] if k < num_layers-1 else in_channels
+            last_layer = (k == num_layers-1)
             layer = ConvLayer(
                 input_dim=in_dims[k],
                 output_dim=output_dim,
-                kernel_size=2 if k == num_layers-1 else 4,
-                stride=2,
+                kernel_size=4,
+                stride=1 if k == num_layers-1 else 2,
                 padding=0 if k == num_layers-1 else 1,
-                last_layer=(k == num_layers-1)
+                last_layer=last_layer,
+                batch_norm=(k>0)
             )
 
             self.model.append(layer)
         
-        # self.model.append(nn.Sigmoid())
+        if last_layer:
+            if net_type in ["lsgan","wgan"]:
+                self.model[-1].model = self.model[-1].model[:-1]
+                # self.model.append(nn.Flatten())
+                # self.model.append(nn.Linear(in_dims[-1],3))
+        
         self.model = nn.Sequential(*self.model)
         
         

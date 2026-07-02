@@ -10,13 +10,12 @@ class DCGANTrainer(GANTrainer):
         self.latent_dim = latent_dim
         self.device = device
         self.verbose = False #default False
-        
         self.gen.to(device)
         self.disc.to(device)
         #build optimizers
         self.optim_gen = optim_gen_strat.build_optim(self.gen)
         self.optim_disc = optim_disc_strat.build_optim(self.disc)
-
+        print(self.disc)
         self.init_models()
 
         # create the image plotter now that generator has been moved to the correct device

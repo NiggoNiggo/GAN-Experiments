@@ -15,9 +15,9 @@ class AbstractSampleImages(ABC):
     def sample_images(self, num_img: int):
         pass
 
-    def plot_images_grid(self, images, num_img: int, nrow: int = 4, normalize: bool = True, filename: str = "sample_grid.png"):
+    def plot_images_grid(self,images,num_img:int,nrow:int=4,filename:str="sample_grid.png"):
 
-        grid = make_grid(images, nrow=nrow, normalize=normalize)
+        grid = make_grid(images, nrow=nrow, normalize=True,value_range=(-1,1))
         np_grid = grid.permute(1, 2, 0).cpu().numpy()
 
         plt.figure(figsize=(nrow * 2, (num_img // nrow + 1) * 2))

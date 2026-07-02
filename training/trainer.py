@@ -72,9 +72,9 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
-        for epoch in tqdm(range(self.epoch, self.epoch+epochs)):
+        for epoch in range(self.epoch, self.epoch+epochs):
             self.epoch = epoch
-            for batch in self.data_loader:
+            for batch in tqdm(self.data_loader):
                 d_loss, g_loss = self.train_step(batch)
             #updating the info dict with each information that is saved from here now 
             info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
@@ -92,7 +92,7 @@ class GANTrainer(ABC):
 
     def init_models(self):
         print("..... init models.....")
-        if (Path(self.save_path) / self.filename).exists():
+        if len(os.listdir((Path(self.save_path) / self.filename))) > 1:
             path = Path(self.save_path) / self.filename / "models"
             last_models = []
             highest_idx = 0
@@ -100,8 +100,8 @@ class GANTrainer(ABC):
             all_files = os.listdir(path)                
             epochs = [int(re.search(r"epoch_(\d+)", f).group(1)) for f in all_files if "epoch" in f]
             if epochs:
-                highest_idx = max(epochs) +1
-                self.epoch = highest_idx
+                highest_idx = max(epochs)
+                self.epoch = highest_idx + 1
             else:
                 self.epoch = 1
             print(f"Previous Training will be continued at epoch: {highest_idx}")
@@ -116,6 +116,11 @@ class GANTrainer(ABC):
 
                 if match:
                     attr = model[:match.start()]
+
+                    # KLEINIGKEIT 2: Namen der Datei auf deine echten Variablen-Attribute mappen
+                    # Falls deine Variablen 'self.generator' & 'self.discriminator' heißen, nutze: "generator" / "discriminator"
+                    if attr == "Generator": attr = "gen"          # Passe "gen" an dein Klassen-Attribut an
+                    if attr == "Discriminator": attr = "disc"    # Passe "disc" an dein Klassen-Attribut an
 
                     if hasattr(self, attr):
                         model_path = path / model
@@ -139,6 +144,7 @@ class GANTrainer(ABC):
                 self.gen.apply(weights_init)
                 self.disc.apply(weights_init)
             self.epoch = 1
+
                         
                         
     def attach(self,observer):

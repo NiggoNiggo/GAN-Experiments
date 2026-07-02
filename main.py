@@ -18,6 +18,8 @@ from architectures.cgan_networks import ConditionalDCGANDiscriminator, Conditona
 from architectures.cycle_networks import CycleDiscriminator, CycleGenerator
 from param_configs.optimizer_factory import AdamStrategy,CycleStrategy
 from loss_functions.vanilla_loss import VanillaGANLoss
+from loss_functions.lsgan_loss import LSLoss
+from loss_functions.hinge_loss import HingeLoss
 from data.mnist import mnist_train, mnist_test
 from data.celebA import CelebADataset
 from data.wrappers import DataWrapper
@@ -28,8 +30,15 @@ from observer.observer_plot_values import PlotObserver
 from observer.observer_cycleGAN import CycleGANImageObserver
 from observer.observer_evaluation import EvalObserver
 from plotting.loss_plotting import Plotting
+import multiprocessing
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn', force=True)
+    torch.backends.cudnn.benchmark = True
+    torch.set_float32_matmul_precision("high")
+    
+    # Erlaubt PyTorch, intern alle CPU-Kerne für mathematische Operationen zu nutzen
+    torch.set_num_threads(8) 
     #Vanilla Linear GAN Trainer:
 
     # training = VanillaGANTrainer(
@@ -49,7 +58,7 @@ if __name__ == "__main__":
 
 
     # DCGAN Trainer
-    out_shape = 64
+    out_shape = 128
     channels = 3
     latent_dim = 100
 
@@ -63,16 +72,16 @@ if __name__ == "__main__":
     ])
 
 
-    path = Path("/mnt/data2/datasets/monet/trainA")
+    data_path = Path("/mnt/data2/datasets/celebA/img_align_celeba")
     save_path = Path("/mnt/data2/gan_results")
-    celeb_dataset = CelebADataset(path,transform)
-    filename = "dc_test2"
+    dataset = CelebADataset(data_path,transform)
+    filename = "hinge_test1"
 
     training = DCGANTrainer(
         gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
         disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
-        data_loader=torch.utils.data.DataLoader(DataWrapper(celeb_dataset,has_labels=False),batch_size=64,shuffle=True,pin_memory=True,num_workers=8),
-        loss_fn=VanillaGANLoss(),
+        data_loader=torch.utils.data.DataLoader(DataWrapper(dataset,has_labels=False),batch_size=512,shuffle=True,pin_memory=True,num_workers=8,persistent_workers=True),
+        loss_fn=HingeLoss(),
         optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         latent_dim=100,
@@ -83,12 +92,18 @@ if __name__ == "__main__":
     training.attach(PlotObserver(path=os.path.join(save_path, filename),filename="values.csv"))
     training.attach(PlotLatentGANsObserver(num_images=64))
 
-    # plotter = Plotting(path, filename)
+    #resnet gan einbauen
+
+
+
+
+
+    # plotter = Plotting(save_path, filename)
     # plot_observer = PlotObserver(plotter)
     # training.attach(plot_observer)
 
 
-    gen, disc = training.train(100)
+    gen, disc = training.train(150)
     sample = ConvGANImageSampler(gen,100)
     sample.sample_images(64)
 
@@ -153,6 +168,7 @@ if __name__ == "__main__":
     #     shuffle=True,
     #     pin_memory=True,
     #     num_workers=8,
+    #     prefetch_factor=4,
     #     drop_last=True)
 
     # print(len(data_loader))
@@ -174,15 +190,9 @@ if __name__ == "__main__":
         
     # training.train(50)
     
-    #loss plot observer adaption to cyclegan
-    
-    #what do i need next?
-    
-    
-    #experimente mit der latent dim machne mal
-    #after SRGAN and dynamic cyclegan size
-    #stackGAN auch implementieren
 
-
-
-    #rgbs anpassen
+#als nächstes schauen das alle gans laufen dann losses plotten lassen 
+#für losses ein gefühl bekommen
+#cyclegan hier rausnehmen und in ein eigenes Projekt packen, SRGAN auch in ein eigenes Projekt packen 
+# hier weitere losses wgan, wgan+gp, lsgan, perceptual gan etc.
+#config für gan loading 
