@@ -13,7 +13,7 @@ class PlotLatentGANsObserver(Observer):
         trainer = info["trainer"]
         self.plotter = ConvGANImageSampler(trainer.gen,trainer.latent_dim)
         imgs = self.plotter.sample_images(self.num_images)
-        self.plotter.plot_images_grid(imgs, num_img=self.num_images, nrow=8,filename=os.path.join(trainer.save_path,trainer.filename,"plots",f"epoch_{epoch}.png"))
+        self.plotter.plot_images_grid(imgs, num_img=self.num_images, nrow=8,filename=os.path.join(trainer.save_path,trainer.filename,"fake",f"epoch_{epoch}.png"))
 
         
 

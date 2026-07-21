@@ -8,7 +8,7 @@ transform = transforms.Compose([
 ])
 
 
-mnist_train = MNIST(r"C:\data_sets",train=True,download=True,transform=transform)
+mnist_train = MNIST(r"/mnt/",train=True,download=True,transform=transform)
 mnist_test = MNIST(r"C:\data_sets",train=False,download=True,transform=transform)
 
 if __name__ == "__main__":

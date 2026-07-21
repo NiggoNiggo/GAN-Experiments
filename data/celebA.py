@@ -13,13 +13,13 @@ class CelebADataset(torch.utils.data.Dataset):
         self.path = path
         self.data = []
         for r,d,f in os.walk(Path(self.path)):
-            self.data.extend([Path(r) / file for file in f if file.endswith(".jpg")])
+            self.data.extend([Path(r) / file for file in f])
         
     def __len__(self):
         return len(self.data)
     
     def __getitem__(self,idx):
-        item = Image.open(self.data[idx])
+        item = Image.open(self.data[idx]).convert("RGB")
         return self.transforms(item)
 
 

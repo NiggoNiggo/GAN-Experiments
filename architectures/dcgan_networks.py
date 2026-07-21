@@ -8,15 +8,14 @@ class DCGANGenerator(nn.Module):
         super().__init__()
 
         # Anzahl der Layer bis out_shape von 1x1
-        num_layers = int(math.log2(out_shape)) - 1  # z.B. 32 -> 5 Layer
+        num_layers = int(math.log2(out_shape)) - 1  
 
-        start_channels = 2 ** (num_layers + 5)  # z.B. 1024 für 32x32
+        start_channels = 2 ** (num_layers + 5)  
 
         # Listen für in/out Channels
         in_dims = [latent_dim] + [start_channels // (2**i) for i in range(num_layers-1)]
         out_dims = [start_channels // (2**i) for i in range(num_layers-1)] + [out_channels]
 
-        print("Generator in/out dims:", in_dims, out_dims)
 
         self.model = []
         for k in range(len(in_dims)):
@@ -45,19 +44,10 @@ class DCGANDiscriminator(nn.Module):
         #create the in dimensions with start 64 and increase the power of 2
         in_dims = [in_channels] + [2**(6+n) for n in range(num_layers-1)]
         out_dims = [2**(6+n) for n in range(num_layers-1)] + [1]
-        print("out dims: ", out_dims)
-        print("in dims: ", in_dims)
-        print(num_layers)
-        print(len(in_dims),len(out_dims))
+        
         #assert that in and out dims have the same amout of values
         assert len(in_dims) == len(out_dims)
-        #assert that in_channels have equally values containing as num layers' length
-        # assert len(in_dims) == num_layers
-        # #assert that the length of out dims matches num layers
-        # assert len(out_dims) == num_layers
-        
 
-        
         for k in range(num_layers):
             output_dim = out_dims[k] if k < num_layers-1 else in_channels
             last_layer = (k == num_layers-1)
@@ -84,6 +74,16 @@ class DCGANDiscriminator(nn.Module):
         
     def forward(self,x):
         return self.model(x)
+
+
+
+class Criticer(nn.Module):
+    def __init__(self):
+        super().__init__(self)
+    
+    def forward(self,x):
+        return x
+
 
 
 if __name__ == "__main__":

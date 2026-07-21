@@ -49,10 +49,12 @@ class GANTrainer(ABC):
         #initilaize the model whehter normal distributed or with loading a filename
         self.filename = filename
         #filename comes from search from organizer and the filesystem
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Using device: {self.device}")
-        self.init_project()
+        self.device = self._get_device()
         
+        self.init_project()
+    
+    
+    
     @abstractmethod
     def train_disc(self):
         pass
@@ -78,6 +80,8 @@ class GANTrainer(ABC):
                 d_loss, g_loss = self.train_step(batch)
             #updating the info dict with each information that is saved from here now 
             info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
+            #maybe change the info to execute it each iteration not only after epoch
+            #allows better comparability with different models
             self.notify(info)
             print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
 
@@ -109,18 +113,13 @@ class GANTrainer(ABC):
                 match = re.search(fr"_epoch_{highest_idx}\.pkl", file)
                 if match:
                     last_models.append(file)
-            print(last_models)
             for model in last_models:
                 string_in_each_model = r"_epoch_\d+.pkl"
                 match = re.search(string_in_each_model, model)
-
                 if match:
                     attr = model[:match.start()]
-
-                    # KLEINIGKEIT 2: Namen der Datei auf deine echten Variablen-Attribute mappen
-                    # Falls deine Variablen 'self.generator' & 'self.discriminator' heißen, nutze: "generator" / "discriminator"
-                    if attr == "Generator": attr = "gen"          # Passe "gen" an dein Klassen-Attribut an
-                    if attr == "Discriminator": attr = "disc"    # Passe "disc" an dein Klassen-Attribut an
+                    if attr == "Generator": attr = "gen"    
+                    if attr == "Discriminator": attr = "disc"    
 
                     if hasattr(self, attr):
                         model_path = path / model
@@ -135,17 +134,13 @@ class GANTrainer(ABC):
             print("Start training")
         else:
             print("make them normally distributed")
-            if hasattr(self, "G_AB"):
-                self.G_AB.apply(weights_init)
-                self.G_BA.apply(weights_init)
-                self.D_A.apply(weights_init)
-                self.D_B.apply(weights_init)
-            else:
-                self.gen.apply(weights_init)
-                self.disc.apply(weights_init)
+            self.gen.apply(weights_init)
+            self.disc.apply(weights_init)
             self.epoch = 1
 
-                        
+    def sample_images(self, num_img=64):
+        imgs = self.plotter.sample_images(num_img)
+        self.plotter.plot_images_grid(imgs, num_img=num_img, nrow=8, normalize=True,filename=os.path.join(self.save_path,self.filename,"plots",f"epoch_{self.epoch}.png"))
                         
     def attach(self,observer):
         #attach the observer to the Trainer 
@@ -159,3 +154,17 @@ class GANTrainer(ABC):
         for observer in self.observers:
             #transfer self because it is the trainer instance
             observer.update(info)
+    
+    def _get_device(self):
+        """Allocate the device for usage. Tries to find a gpu, if no gpu found the device is set to cpu. However, the training is not recommendended with only cpu. Watch your dataset size and the corresponding models.
+
+        Returns:
+            torch.cuda.device: GPU if found else CPU
+        """
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            print(f"Using device: {torch.cuda.get_device_name(device)}")
+        else:
+            device = torch.device("cpu")
+            print(f"Using  device: {device}, not recommendend")
+        return device

@@ -5,7 +5,17 @@ from testing.create_image import ConvGANImageSampler
 
 
 class DCGANTrainer(GANTrainer):
-    def __init__(self, gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat, latent_dim,save_path,filename,device="cuda"):
+    def __init__(self, 
+                gen, 
+                disc, 
+                data_loader, 
+                loss_fn, 
+                optim_gen_strat, 
+                optim_disc_strat, 
+                latent_dim,
+                save_path,
+                filename,
+                device="cuda"):
         super().__init__(gen, disc, data_loader, loss_fn, optim_gen_strat, optim_disc_strat,latent_dim,save_path,filename)
         self.latent_dim = latent_dim
         self.device = device
@@ -15,7 +25,6 @@ class DCGANTrainer(GANTrainer):
         #build optimizers
         self.optim_gen = optim_gen_strat.build_optim(self.gen)
         self.optim_disc = optim_disc_strat.build_optim(self.disc)
-        print(self.disc)
         self.init_models()
 
         # create the image plotter now that generator has been moved to the correct device
@@ -57,6 +66,4 @@ class DCGANTrainer(GANTrainer):
 
         return d_loss, g_loss
     
-    def sample_images(self, num_img):
-        imgs = self.plotter.sample_images(64)
-        self.plotter.plot_images_grid(imgs, num_img=64, nrow=8, normalize=True,filename=os.path.join(self.save_path,self.filename,"plots",f"epoch_{self.epoch}.png"))
+    

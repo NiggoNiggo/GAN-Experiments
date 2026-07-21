@@ -36,7 +36,7 @@ class FileOrganizer():
         # values_csv contains different files that save the values for losses, metrics in csv files for offline plotting
         #real_samples contains each epoch a batch of generated samples
         #model
-        folders = ["fake_samples","plots","values_csv","real_samples","models","features"]
+        folders = ["fake","values_csv","loss_plot","models",]
         for folder in folders:
             #new path with additional folder
             new_path = Path(path) / folder

@@ -15,3 +15,4 @@ class PlotObserver(Observer):
 
         # optional: direkt plotten
         self.plotter.plot_losses(save=True, show=False)
+    

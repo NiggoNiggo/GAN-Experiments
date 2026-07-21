@@ -1,12 +1,9 @@
 import os
 from pathlib import Path
-import matplotlib
-
-from observer.observer_make_plot_latent_gans import PlotLatentGANsObserver
-matplotlib.use('Agg')
-
 import torch
 from torchvision import transforms
+
+
 
 from training.vanilla_trainer import VanillaGANTrainer
 from training.dcgan_trainer import DCGANTrainer
@@ -20,49 +17,30 @@ from param_configs.optimizer_factory import AdamStrategy,CycleStrategy
 from loss_functions.vanilla_loss import VanillaGANLoss
 from loss_functions.lsgan_loss import LSLoss
 from loss_functions.hinge_loss import HingeLoss
-from data.mnist import mnist_train, mnist_test
+# from data.mnist import mnist_train, mnist_test
+
 from data.celebA import CelebADataset
 from data.wrappers import DataWrapper
 from data.cycle_dataset import CycleDataset
 from testing.create_image import LinearGANImageSampler, ConditionalGANImageSampler, ConvGANImageSampler
 from observer.observer_save import ModelSaver
 from observer.observer_plot_values import PlotObserver
-from observer.observer_cycleGAN import CycleGANImageObserver
+from observer.observer_make_plot_latent_gans import PlotLatentGANsObserver
 from observer.observer_evaluation import EvalObserver
-from plotting.loss_plotting import Plotting
+# from plotting.loss_plotting import Plotting
 import multiprocessing
 
 if __name__ == "__main__":
+    #make training more efficient
     multiprocessing.set_start_method('spawn', force=True)
     torch.backends.cudnn.benchmark = True
     torch.set_float32_matmul_precision("high")
-    
-    # Erlaubt PyTorch, intern alle CPU-Kerne für mathematische Operationen zu nutzen
     torch.set_num_threads(8) 
-    #Vanilla Linear GAN Trainer:
-
-    # training = VanillaGANTrainer(
-    #     gen=LinearGenerator(input_dim=100, output_dim=28*28),
-    #     disc=LinearDiscriminator(input_dim=28*28),
-    #     data_loader=torch.utils.data.DataLoader(DataWrapper(train_data,has_labels=True),batch_size=64,shuffle=True),
-    #     loss_fn=VanillaGANLoss(),
-    #     optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    #     optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    #     latent_dim=100)
-
-    # gen, disc = training.train(100)
-
-
-    # sample = SampleNormalImages(gen,100)
-    # sample.sample_images(64)
-
-
+ 
     # DCGAN Trainer
-    out_shape = 128
+    out_shape = 256
     channels = 3
     latent_dim = 100
-
-
 
     
     transform = transforms.Compose([
@@ -72,16 +50,18 @@ if __name__ == "__main__":
     ])
 
 
-    data_path = Path("/mnt/data2/datasets/celebA/img_align_celeba")
+    # data_path = Path("/mnt/data2/datasets/celebA/img_align_celeba")
+    # data_path = Path("/mnt/data2/datasets/ImageNET_half")
+    data_path = Path("/mnt/data2/datasets/lsun/train")
     save_path = Path("/mnt/data2/gan_results")
     dataset = CelebADataset(data_path,transform)
-    filename = "hinge_test1"
+    filename = "lsgan_lsun_256x256"
 
     training = DCGANTrainer(
         gen=DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=latent_dim),
         disc=DCGANDiscriminator(out_shape=out_shape,in_channels=channels),
-        data_loader=torch.utils.data.DataLoader(DataWrapper(dataset,has_labels=False),batch_size=512,shuffle=True,pin_memory=True,num_workers=8,persistent_workers=True),
-        loss_fn=HingeLoss(),
+        data_loader=torch.utils.data.DataLoader(DataWrapper(dataset,has_labels=False),batch_size=256,shuffle=True,pin_memory=True,num_workers=10,persistent_workers=True),
+        loss_fn=LSLoss(),
         optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
         latent_dim=100,
@@ -103,9 +83,9 @@ if __name__ == "__main__":
     # training.attach(plot_observer)
 
 
-    gen, disc = training.train(150)
-    sample = ConvGANImageSampler(gen,100)
-    sample.sample_images(64)
+    training.train(150)
+    # sample = ConvGANImageSampler(gen,100)
+    # sample.sample_images(64)
 
 
 
@@ -149,50 +129,20 @@ if __name__ == "__main__":
     # images.plot_images_grid(imgs,60,nrow=6)
 
 
+   #Vanilla Linear GAN Trainer:
 
-
-    #-----CycleGAN
-    # latent_dim = 100
-    # save_path = Path(r"/mnt/data2/gan_results")
-    # filename = "monet_photo_cycleGAN"
-    # csv_values = "values_csv"
-    # path_A = Path("/mnt/data2/datasets/monet/trainA")
-    # path_B = Path("/mnt/data2/datasets/photo/trainB")
-
-    # full_test_path = save_path / filename
-
-
-    # data_loader = torch.utils.data.DataLoader(
-    #     CycleDataset(path_A=path_A, path_B=path_B, transform=None),
-    #     batch_size=1,
-    #     shuffle=True,
-    #     pin_memory=True,
-    #     num_workers=8,
-    #     prefetch_factor=4,
-    #     drop_last=True)
-
-    # print(len(data_loader))
-
-    # training = CycleGANTrainer(
-    #     G_AB=CycleGenerator(),
-    #     G_BA=CycleGenerator(),
-    #     D_A=CycleDiscriminator(),
-    #     D_B=CycleDiscriminator(),
-    #     data_loader=data_loader,
+    # training = VanillaGANTrainer(
+    #     gen=LinearGenerator(input_dim=100, output_dim=28*28),
+    #     disc=LinearDiscriminator(input_dim=28*28),
+    #     data_loader=torch.utils.data.DataLoader(DataWrapper(train_data,has_labels=True),batch_size=64,shuffle=True),
     #     loss_fn=VanillaGANLoss(),
-    #     optim_strat=CycleStrategy(lr=0.0002, betas=(0.5, 0.999)),
-    #     latent_dim=100,
-    #     save_path=save_path,
-    #     filename=filename
-    # )    
-    # training.attach(CycleGANImageObserver())
-    # training.attach(ModelSaver(full_test_path))
-        
-    # training.train(50)
-    
+    #     optim_gen_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+    #     optim_disc_strat=AdamStrategy(lr=0.0002, betas=(0.5, 0.999)),
+    #     latent_dim=100)
 
-#als nächstes schauen das alle gans laufen dann losses plotten lassen 
-#für losses ein gefühl bekommen
-#cyclegan hier rausnehmen und in ein eigenes Projekt packen, SRGAN auch in ein eigenes Projekt packen 
-# hier weitere losses wgan, wgan+gp, lsgan, perceptual gan etc.
-#config für gan loading 
+    # gen, disc = training.train(100)
+
+
+    # sample = SampleNormalImages(gen,100)
+    # sample.sample_images(64)
+

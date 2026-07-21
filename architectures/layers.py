@@ -54,7 +54,12 @@ class ConvTransposeLayer(nn.Module):
     
 
 
+class ResNETLayer(nn.Module):
+    def __init__(self):
+        pass
 
+    def forward(self,x):
+        return x 
 
 
 #für jedes GAN einen letzen Layer definieren
