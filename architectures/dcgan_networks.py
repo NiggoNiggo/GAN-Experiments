@@ -1,42 +1,75 @@
-from .layers import ConvLayer, ConvTransposeLayer
+from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDown
+from core.registries import GENERATORS, DISCRIMINATORS
 from torch import nn
 import math
 
 
+@GENERATORS.registry("dcgan")
 class DCGANGenerator(nn.Module):
-    def __init__(self, out_shape, out_channels: int, latent_dim: int):
+    def __init__(self,
+                 out_shape:int, 
+                out_channels:int,
+                latent_dim: int,
+                block_type:str,
+                activation:str="Tanh"):
         super().__init__()
-
-        # Anzahl der Layer bis out_shape von 1x1
+        #num of layers to obtain 1x1 at the end with a given output shape
+        #this only works for number 2^n
         num_layers = int(math.log2(out_shape)) - 1  
-
         start_channels = 2 ** (num_layers + 5)  
 
-        # Listen für in/out Channels
-        in_dims = [latent_dim] + [start_channels // (2**i) for i in range(num_layers-1)]
-        out_dims = [start_channels // (2**i) for i in range(num_layers-1)] + [out_channels]
+        
 
+        #creates list to save input dims and output dims respectively 
+        in_dims = [start_channels // (2**i) for i in range(num_layers-1)]
+        out_dims = in_dims[1:] + [out_channels]
+
+        #linear mapping network
+        self.linear_mapping = nn.Linear(latent_dim,in_dims[0]*4*4)
 
         self.model = []
         for k in range(len(in_dims)):
-            layer = ConvTransposeLayer(
-                input_dim=in_dims[k],
-                output_dim=out_dims[k],
-                kernel_size=4,
-                stride=2,
-                padding=0 if k == 0 else 1,
-                last_layer=(k == len(in_dims)-1)
-            )
+            if block_type == "deconv":
+                layer = ConvTransposeLayer(
+                    input_dim=in_dims[k],
+                    output_dim=out_dims[k],
+                    kernel_size=4,
+                    stride=2,
+                    padding=1,
+                    last_layer=(k == len(in_dims)-1)
+                )
+
+                #resnet down and upsample layer
+                
+            if block_type == "resnet":
+                if k == len(in_dims)-1:
+                    layer = nn.Sequential(
+                        ResNETLayerUp(in_dims[k], in_dims[k]),
+                        nn.Conv2d(in_dims[k], out_dims[k], kernel_size=3, padding=1)
+                    )
+                else:
+                    layer = ResNETLayerUp(in_dims[k], out_dims[k])
+                
             self.model.append(layer)
 
+        self.model.append(getattr(nn,activation)())
         self.model = nn.Sequential(*self.model)
 
     def forward(self, x):
+        bs = x.size(0)
+        x = x.squeeze(-1).squeeze(-1)
+        x = self.linear_mapping(x)
+        x = x.view(bs,-1,4,4)
+
         return self.model(x)
 
-
+@DISCRIMINATORS.registry("dcgan")
 class DCGANDiscriminator(nn.Module):
-    def __init__(self,out_shape,in_channels,net_type="lsgan"):
+    def __init__(self,
+                 out_shape:int,
+                 in_channels:int,
+                 block_type:str,
+                 activation:str):
         super().__init__()
         self.model = []
         #computes the amount of layers to append to the desired out shape
@@ -47,28 +80,46 @@ class DCGANDiscriminator(nn.Module):
         
         #assert that in and out dims have the same amout of values
         assert len(in_dims) == len(out_dims)
+        #more asserts
+        #last out_dim = out_dim
+        # etc
+
 
         for k in range(num_layers):
-            output_dim = out_dims[k] if k < num_layers-1 else in_channels
-            last_layer = (k == num_layers-1)
-            layer = ConvLayer(
-                input_dim=in_dims[k],
-                output_dim=output_dim,
-                kernel_size=4,
-                stride=1 if k == num_layers-1 else 2,
-                padding=0 if k == num_layers-1 else 1,
-                last_layer=last_layer,
-                batch_norm=(k>0)
-            )
+            is_last = (k == num_layers - 1)
 
+            if block_type == "deconv":
+                layer = ConvLayer(
+                    input_dim=in_dims[k],
+                    output_dim=out_dims[k],
+                    kernel_size=4,
+                    stride=1 if is_last else 2,
+                    padding=0 if is_last else 1,
+                    batch_norm=False #(k > 0)
+                )
+
+            elif block_type == "resnet":
+
+                if is_last:
+                    # letzter Block: 4x4 -> 1x1
+                    layer = nn.Conv2d(
+                        in_dims[k],
+                        out_dims[k],
+                        kernel_size=4,
+                        stride=1,
+                        padding=0
+                    )
+
+                else:
+
+                    layer = ResNETLayerDown(in_dims[k],out_dims[k],batch_norm=False)
             self.model.append(layer)
-        
-        if last_layer:
-            if net_type in ["lsgan","wgan"]:
-                self.model[-1].model = self.model[-1].model[:-1]
-                # self.model.append(nn.Flatten())
-                # self.model.append(nn.Linear(in_dims[-1],3))
-        
+
+
+        if activation.lower() != "none":
+            activation = getattr(torch.nn, activation)()
+            self.model.append(activation)
+
         self.model = nn.Sequential(*self.model)
         
         
@@ -77,24 +128,16 @@ class DCGANDiscriminator(nn.Module):
 
 
 
-class Criticer(nn.Module):
-    def __init__(self):
-        super().__init__(self)
-    
-    def forward(self,x):
-        return x
-
 
 
 if __name__ == "__main__":
     import torch
     # Testing the Generator
     print(f"Test Generator: create Noise and propagate it in the Generator, if worked output shapes of z and Fake are shown....")
-    
     channels = 3
     z = torch.randn((64,100,1,1))
-    out_shape = 64
-    gen = DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100)
+    out_shape = 32
+    gen = DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100,block_type="resnet")
     fake = gen(z)
     print(f"Z: {z.shape}, Fake: {fake.shape}")
     # Testing the Discriminator
@@ -102,11 +145,16 @@ if __name__ == "__main__":
     
     # in_dims = [channels,64,128,256]
     # out_dims = [64,128,256,1]
-    disc = DCGANDiscriminator(out_shape=out_shape,in_channels=channels)
+    disc = DCGANDiscriminator(out_shape=out_shape,in_channels=channels,block_type="resnet",activation="Sigmoid")
+    print(disc)
     noise = torch.randn((64,channels,out_shape,out_shape))
     print("Noise ", noise.shape)
     
     disc_out = disc(noise)
     
     print(f"Fake shape: {fake.shape}, Disc Out shape: {disc_out.shape}")
+
+    print(gen)
+
+
   

@@ -1,58 +1,43 @@
 import os
 import re
+from core.registries import *
 from pathlib import Path
 import torch
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
 from testing.create_image import ConvGANImageSampler
+import torchvision.transforms as T
 
 from architectures.init_weights import weights_init
 from organization.file_system_organizer import FileOrganizer
 from observer.observer_save import ModelSaver
+from data.wrappers import DataWrapper
+from core.optimizer_factory import AdamStrategy
+
+#importall the modules that are registred
+import architectures, loss_functions, data
 
 
 class GANTrainer(ABC):
     def __init__(self, 
-                 gen,
-                 disc, 
-                 data_loader, 
-                 loss_fn, 
-                 optim_gen_strat, 
-                 optim_disc_strat,
-                 latent_dim : int,
-                 save_path : str,
-                 filename : str):
-        """Abstract class for Training procedure of gan
+                 config
+               ):
 
-        Args:
-            gen (torch.nn.Module): Generator Network
-            disc (torch.nn.Module): Discriminator Network
-            data_loader (torch.utils.data.DataLoader): Data loader
-            loss_fn (Loss_fn): Loss function
-            optim_gen_strat (optim_strat): Strategy of the optimizer for generator
-            optim_disc_strat (optim_strat): Strategy of the optimizer for discriminator
-            latent_dim (int): Latent dimension 
-        """
-        self.gen = gen
-        self.disc = disc 
-        self.data_loader = data_loader
-        self.loss_fn = loss_fn
+        self.cfg = config
         #ensure that no network is None, because more complex gans like cyclegan initiate their own gens and disc and set them to zero
-        if self.gen and self.disc:
-            self.optim_gen = optim_gen_strat.build_optim(self.gen)
-            self.optim_disc = optim_disc_strat.build_optim(self.disc)
-        self.latent_dim = latent_dim
-        #where the data is initilized
-        self.save_path = save_path
+        #make the optimizer, but this should be more clearer in future
+        
         #observers for further functionality
         self.observers = []
         #initilaize the model whehter normal distributed or with loading a filename
-        self.filename = filename
+        self.filename = self.cfg["training"]["args"]["project_name"]
+        self.save_path = self.cfg["training"]["args"]["save_path"]
+        self.latent_dim = self.cfg["params"]["latent_dim"]
         #filename comes from search from organizer and the filesystem
         self.device = self._get_device()
-        
+        self.encode_config()
         self.init_project()
-    
+        
     
     
     @abstractmethod
@@ -91,6 +76,7 @@ class GANTrainer(ABC):
     def init_project(self):
         file = FileOrganizer(filename=self.filename,
                              path=self.save_path)
+        print(f"Project located in {os.path.join(self.save_path,self.filename)}")
         #creates a full build for a new project
         file.create_dir()
 
@@ -168,3 +154,46 @@ class GANTrainer(ABC):
             device = torch.device("cpu")
             print(f"Using  device: {device}, not recommendend")
         return device
+
+    def encode_config(self):
+        #load the generator
+        gen_cls = GENERATORS.get(self.cfg["generator"]["name"])
+        self.gen = gen_cls(**self.cfg["generator"]["args"])
+        self.gen = self.gen.to(self.device)
+
+        #load the disc:
+        disc_cls = DISCRIMINATORS.get(self.cfg["discriminator"]["name"])
+        self.disc = disc_cls(**self.cfg["discriminator"]["args"])
+        self.disc = self.disc.to(self.device)
+
+        #load the loss function
+        loss = LOSSES.get(self.cfg["loss"]["name"])
+        self.loss_fn = loss()
+        
+        #load the data
+        transform = T.Compose([
+        T.Resize((self.cfg["training"]["args"]["out_shape"], 
+                        self.cfg["training"]["args"]["out_shape"])),      
+        T.ToTensor(),             
+        T.Normalize((0.5,), (0.5,), (0.5,))  
+        ])
+
+        #prepare dataset:
+        data_cls = DATASETS.get(self.cfg["dataset"]["name"])
+        dataset = data_cls(self.cfg["dataset"]["data_path"],transform)
+
+        #make dataloader ready
+        self.data_loader=torch.utils.data.DataLoader(
+            DataWrapper(dataset,
+                        has_labels=self.cfg["params"]["has_labels"]
+                        ),
+                        batch_size=self.cfg["params"]["batchsize"],
+                        shuffle=True,
+                        pin_memory=True,
+                        num_workers=self.cfg["params"]["num_workers"],persistent_workers=True)
+
+        self.optim_gen=AdamStrategy(lr=self.cfg["params"]["lr_gen"], betas=(0.5, 0.999)).build_optim(self.gen)
+        self.optim_disc=AdamStrategy(lr=self.cfg["params"]["lr_disc"], betas=(0.5, 0.999)).build_optim(self.disc)
+
+
+        

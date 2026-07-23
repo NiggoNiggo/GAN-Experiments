@@ -1,7 +1,7 @@
 import torch
 
 class DataWrapper(torch.utils.data.Dataset):
-    def __init__(self, dataset, has_labels=True):
+    def __init__(self, dataset, has_labels):
         self.dataset = dataset
         self.has_labels = has_labels
 

@@ -1,6 +1,8 @@
 import torch 
 from torch import nn
+from core.registries import LOSSES
 
+@LOSSES.registry("hinge")
 class HingeLoss:
     def __init__(self):
         super().__init__()

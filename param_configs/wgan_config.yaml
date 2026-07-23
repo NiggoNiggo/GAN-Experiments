@@ -1,27 +1,26 @@
 training:
   name: dcgan
   args:
-    out_shape: 64
+    out_shape: 256
     channels: 3
-    project_name : resnet_64x64
+    project_name : lsgan_lsun_256x256
     save_path : /mnt/data2/gan_results
     
 
 generator: 
-  name: dcgan
+  name: wgan
   args: 
-    out_shape : 64
+    out_shape : 256
     latent_dim: 100
     out_channels: 3
-    block_type : resnet
+    # upsample_type : deconv
 
 discriminator:
   name: dcgan
   args:
-    out_shape: 64
+    out_shape: 256
     in_channels : 3
-    block_type : resnet
-    activation : none
+    net_type : "lsgan" #wgan, dcgan 
 
 loss:
   name: lsgan
@@ -32,14 +31,13 @@ augmentation:
 
 dataset:
   name : general
-  # data_path : /mnt/data2/datasets/lsun/train
-  data_path : /mnt/data2/datasets/celebA/img_align_celeba
+  data_path : /mnt/data2/datasets/lsun/train
   
 params:
   has_labels : false
-  batchsize: 512
+  batchsize: 256
   num_workers : 10
   latent_dim : 100
-  lr_disc: 0.0001
-  lr_gen : 0.0002
+  lambda : 10
+  
 

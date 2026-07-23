@@ -1,7 +1,9 @@
 from trainer import GANTrainer
+from core.registries import TRAINERS
+
+
+@TRAINERS.registry("wgan")
 class WGANTrainer(GANTrainer):
-
-
     def __init__(self, 
                 gen, 
                 disc, 

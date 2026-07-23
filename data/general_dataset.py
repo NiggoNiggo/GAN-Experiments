@@ -4,8 +4,10 @@ import torch
 import os
 from pathlib import Path
 from PIL import Image
+from core.registries import DATASETS
 
-class CelebADataset(torch.utils.data.Dataset):
+@DATASETS.registry("general")
+class GeneralSet(torch.utils.data.Dataset):
     def __init__(self,
                  path:str,
                  transforms):
