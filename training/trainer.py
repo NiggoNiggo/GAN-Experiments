@@ -1,5 +1,6 @@
 import os
 import re
+import yaml
 from core.registries import *
 from pathlib import Path
 import torch
@@ -32,11 +33,13 @@ class GANTrainer(ABC):
         #initilaize the model whehter normal distributed or with loading a filename
         self.filename = self.cfg["training"]["args"]["project_name"]
         self.save_path = self.cfg["training"]["args"]["save_path"]
+        self.project_path = os.path.join(self.save_path,self.filename)
         self.latent_dim = self.cfg["params"]["latent_dim"]
         #filename comes from search from organizer and the filesystem
         self.device = self._get_device()
         self.encode_config()
         self.init_project()
+        self.get_params()
         
     
     
@@ -47,7 +50,8 @@ class GANTrainer(ABC):
     def train_gen(self):
         pass
     @abstractmethod
-    def train_step(self,batch):
+    def train_step(self,
+                   batch):
         pass
     
     def ensure_correct_input(self,batch):
@@ -59,70 +63,77 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
+        num_iterations = self.epoch * len(self.data_loader)
         for epoch in range(self.epoch, self.epoch+epochs):
             self.epoch = epoch
-            for batch in tqdm(self.data_loader):
+            pbar = tqdm(self.data_loader)
+            for batch in pbar:
+                mem = torch.cuda.memory_reserved(self.device) / 1024**2
+                pbar.set_postfix(memory=f"{mem:.1f} MB")
                 d_loss, g_loss = self.train_step(batch)
-            #updating the info dict with each information that is saved from here now 
-            info = {"epoch":epoch,"trainer":self,"loss_d":d_loss,"loss_g":g_loss}
-            #maybe change the info to execute it each iteration not only after epoch
-            #allows better comparability with different models
-            self.notify(info)
-            print(f"Epoch {epoch}: D={d_loss:.4f} | G={g_loss:.4f}")
-
-    
-
+                num_iterations += 1
+                #like for each epoch change to a comparable amount of batches computed
+                if num_iterations % 1000 == 0 and num_iterations > 0:
+                    #call the info to notify the observers to do their things
+                    info = {"num_iterations":num_iterations//1000,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
+                    self.notify(info)
+                    #just print some informations every 1000 Iterations
+                    tqdm.write(f"Iterations {num_iterations//1000}k: D={d_loss:.4f} | G={g_loss:.4f}")
+            
 
     def init_project(self):
         file = FileOrganizer(filename=self.filename,
                              path=self.save_path)
-        print(f"Project located in {os.path.join(self.save_path,self.filename)}")
+        path = os.path.join(self.save_path,self.filename)
+        print(f"Project located in {path}")
         #creates a full build for a new project
         file.create_dir()
+        #save the config file
+        with open(os.path.join(path,"config.yaml"),"w") as f:
+            yaml.safe_dump(self.cfg,f,sort_keys=False)
+
+
 
     def init_models(self):
         print("..... init models.....")
-        if len(os.listdir((Path(self.save_path) / self.filename))) > 1:
-            path = Path(self.save_path) / self.filename / "models"
-            last_models = []
-            highest_idx = 0
-            #save all files in al list
-            all_files = os.listdir(path)                
-            epochs = [int(re.search(r"epoch_(\d+)", f).group(1)) for f in all_files if "epoch" in f]
-            if epochs:
-                highest_idx = max(epochs)
-                self.epoch = highest_idx + 1
-            else:
-                self.epoch = 1
-            print(f"Previous Training will be continued at epoch: {highest_idx}")
-            for file in all_files:
-                match = re.search(fr"_epoch_{highest_idx}\.pkl", file)
-                if match:
-                    last_models.append(file)
-            for model in last_models:
-                string_in_each_model = r"_epoch_\d+.pkl"
-                match = re.search(string_in_each_model, model)
-                if match:
-                    attr = model[:match.start()]
-                    if attr == "Generator": attr = "gen"    
-                    if attr == "Discriminator": attr = "disc"    
-
-                    if hasattr(self, attr):
-                        model_path = path / model
-
-                        state_dict = torch.load(model_path, weights_only=True)
-
-                        model_obj = getattr(self, attr)
-                        model_obj.load_state_dict(state_dict)
-
-                        print("Loaded: ", model_path)
-
-            print("Start training")
-        else:
-            print("make them normally distributed")
-            self.gen.apply(weights_init)
-            self.disc.apply(weights_init)
+        models_root = Path(self.save_path) / self.filename / "models"
+        if not models_root.exists():
             self.epoch = 1
+            print("Beginn training von Epoch 1....")
+        # search for highest iteration saved 
+        epoch_dirs = []
+        for folder in models_root.iterdir():
+            if folder.is_dir():
+                match = re.match(r"iteration_(\d+)k", folder.name)
+                if match:
+                    epoch_dirs.append((int(match.group(1)), folder))
+        if not epoch_dirs:
+            self.epoch = 1
+            return
+        # find highest epoch
+        highest_epoch, latest_folder = max(epoch_dirs, key=lambda x: x[0])
+        self.epoch = highest_epoch + 1
+        print(f"Previous training will be continued at epoch {highest_epoch}")
+        # load models
+        for model_file in latest_folder.glob("*.pkl"):
+            name = model_file.stem
+            if name == "Generator":
+                attr = "gen"
+            elif name == "Discriminator":
+                attr = "disc"
+            else:
+                continue
+            if hasattr(self, attr):
+                state_dict = torch.load(model_file, weights_only=True)
+                getattr(self, attr).load_state_dict(state_dict)
+                print(f"Loaded: {model_file}")
+                print("Start training")
+            else:
+                print("make them normally distributed")
+                self.gen.apply(weights_init)
+                self.disc.apply(weights_init)
+                self.epoch = 1
+        
 
     def sample_images(self, num_img=64):
         imgs = self.plotter.sample_images(num_img)
@@ -192,8 +203,20 @@ class GANTrainer(ABC):
                         pin_memory=True,
                         num_workers=self.cfg["params"]["num_workers"],persistent_workers=True)
 
-        self.optim_gen=AdamStrategy(lr=self.cfg["params"]["lr_gen"], betas=(0.5, 0.999)).build_optim(self.gen)
-        self.optim_disc=AdamStrategy(lr=self.cfg["params"]["lr_disc"], betas=(0.5, 0.999)).build_optim(self.disc)
+        self.optim_gen=AdamStrategy(lr=self.cfg["params"]["lr_gen"], 
+                                    betas=(self.cfg["params"]["beta1"], 
+                                           self.cfg["params"]["beta2"])
+                                           ).build_optim(self.gen)
 
+        self.optim_disc=AdamStrategy(lr=self.cfg["params"]["lr_disc"], 
+                                     betas=(self.cfg["params"]["beta1"],
+                                             self.cfg["params"]["beta2"])
+                                             ).build_optim(self.disc)
 
+    def get_params(self):
+        gen_params = sum([p.numel() for p in self.gen.parameters()])
+        disc_params = sum([p.numel() for p in self.disc.parameters()])
+        print(f"Generator parameters: {gen_params} | Discriminator parameters: {disc_params}")
+
+    
         

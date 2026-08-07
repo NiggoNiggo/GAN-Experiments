@@ -5,6 +5,7 @@ from pathlib import Path
 import torch
 
 from .observer import Observer
+import tqdm
 
 
 #should save models each epoch generator and discriminator
@@ -13,26 +14,20 @@ class ModelSaver(Observer):
         self.save_path = save_path
     
     def update(self,info):
-        valid_keys = ["trainer","epoch","metric"]
-        epoch = info["epoch"]
-        filename = f"epoch_{epoch}.pkl"
+        valid_keys = ["trainer","num_iterations","metric"]
+        iterations = info["num_iterations"]
+        filename = f"iteration_{iterations//1000}k.pkl"
         trainer = info["trainer"]
         # Ensure model folder exists
-        models_dir = Path(self.save_path) / "models"
+        iteration_folder = f"iteration_{iterations//1000}k"
+        models_dir = os.path.join(self.save_path,"models",iteration_folder)
         os.makedirs(models_dir, exist_ok=True)
 
         #save torch models
-        try:
-            if hasattr(trainer, 'G_AB'):  # Check if it's a CycleGANTrainer
-                torch.save(trainer.G_AB.state_dict(), models_dir / ("G_AB_" + filename))
-                torch.save(trainer.G_BA.state_dict(), models_dir / ("G_BA_" + filename))
-                torch.save(trainer.D_A.state_dict(), models_dir / ("D_A_" + filename))
-                torch.save(trainer.D_B.state_dict(), models_dir / ("D_B_" + filename))
-            else:
-                torch.save(trainer.gen.state_dict(), models_dir / ("Generator_" + filename))
-                torch.save(trainer.disc.state_dict(), models_dir / ("Discriminator_" + filename))
-            #information log
-            print(f"Models saved in {models_dir}")
-        except Exception as e:
-            print(f"ModelSaver failed: {e}")
-            # Don't stop training because of observer errors
+        torch.save(trainer.gen.state_dict(), os.path.join(models_dir,"Generator_" + filename))
+        torch.save(trainer.disc.state_dict(), os.path.join(models_dir,"Discriminator_" + filename))
+        torch.save(trainer.optim_gen.state_dict(), os.path.join(models_dir,"Optimizer_gen" + filename))
+        torch.save(trainer.optim_disc.state_dict(), os.path.join(models_dir,"Optimizer_disc" + filename))
+        #information log
+        # tqdm.write(f"Models saved in {models_dir}")
+        

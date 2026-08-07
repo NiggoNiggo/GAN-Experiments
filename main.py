@@ -1,3 +1,4 @@
+# external libraries
 import os
 import torch
 import yaml
@@ -23,8 +24,8 @@ import training
 # save allocated_memory and reserved_memory and time per epoch
 #parameter anzahl
 #more evaluation techniques
-# not per epoch notify rather do it per iterations batches times epochs
-
+#alles aus der yaml noch ion nem anderen Format speichern, damit falls die yaml gelöscht wird, nicht alle Infos verscwunden sind, dafür am besten die yaml auch noch in den Projektordner kopieren
+#Observer mal überprüfen, ob die wirklich noch funktionieren und auch sinnvoll sind?
 
 if __name__ == "__main__":
     #make training more efficient
@@ -38,13 +39,6 @@ if __name__ == "__main__":
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-
-    #call the trainer 
-    #register trainer
-    # trainer = Registry
-    # training = DCGANTrainer(
-    #     cfg
-    # )
 
     #register Training and calls the individual Trainer:
     trainer_cls = TRAINERS.get(cfg["training"]["name"])

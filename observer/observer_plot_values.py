@@ -32,7 +32,7 @@ class PlotObserver(Observer):
     def update(self, 
                info : dict):
         #have a closer look at overwriting or if the system is save the values correctly in the csv file
-        valid_keys = ["epoch", "loss_g", "loss_d", "fid"]
+        valid_keys = ["num_iterations", "loss_g", "loss_d", "fid"]
 
         filtered = {k: v for k, v in info.items() if k in valid_keys}
 
