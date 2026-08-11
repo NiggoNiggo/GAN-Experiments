@@ -11,19 +11,15 @@
 4. **LSGAN** – *Least Squares Generative Adversarial Networks* (Mao et al., 2017) – Ersetzt BCE durch Least-Squares-Loss zur Stabilisierung des Trainings. DONE
 
 
-21.07 -28.7:
-
 5. **WGAN** – *Wasserstein GAN* (Arjovsky et al., 2017) – Führt die Wasserstein-Distanz als Trainingsziel ein. 
 6. **WGAN-GP** – *Improved Training of Wasserstein GANs* (Gulrajani et al., 2017) – Ersetzt Weight Clipping durch Gradient Penalty.
-Additional: 
-    1) Adapt Training routine. Make notify of observers every iteration? possible with my current software paradigm? i am not sure....
-    2) Loss plotting complete
-    3) Make main.py more efficient use config file for it and call classes dynamically. This seems to take some time, so I procrastinate
 
-Maybe if the time is sufficient:
 9. **ResNetGAN** – ResNet-basierte Generatoren und Discriminatoren, populär durch WGAN-GP und spätere Arbeiten – Einführung von Residual-Blöcken in GAN-Architekturen.
-8. **SpectralNorm** – *Spectral Normalization for Generative Adversarial Networks* (Miyato et al., 2018) – Lipschitz-Kontrolle über Spektralnorm der Gewichtsmatrizen.
 
+
+
+#hier gehts weiter
+8. **SpectralNorm** – *Spectral Normalization for Generative Adversarial Networks* (Miyato et al., 2018) – Lipschitz-Kontrolle über Spektralnorm der Gewichtsmatrizen.
 
 
 7. **R1 / R2** – *Which Training Methods for GANs do actually Converge?* (Mescheder et al., 2018) – Regularisierung auf Real- bzw. Fake-Samples zur Stabilisierung.

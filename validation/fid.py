@@ -53,6 +53,7 @@ class FID:
                 self.fid_metric.update(fake.to(self.device), real=False)
                 samples_generated += current_batch_size
         #update real images
+        #das hier soll gespeichert werden
         for i in range(0, self.num_samples, self.batchsize):
             batch_chunk = self.real_features[i:i + self.batchsize]
             self.fid_metric.update(batch_chunk.to(self.device), real=True)

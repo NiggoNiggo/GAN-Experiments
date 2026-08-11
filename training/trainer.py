@@ -63,7 +63,7 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self, epochs):
-        num_iterations = self.epoch * len(self.data_loader)
+        num_iterations = (self.epoch - 1) * len(self.data_loader)
         for epoch in range(self.epoch, self.epoch+epochs):
             self.epoch = epoch
             pbar = tqdm(self.data_loader)
@@ -75,6 +75,7 @@ class GANTrainer(ABC):
                 #like for each epoch change to a comparable amount of batches computed
                 if num_iterations % 1000 == 0 and num_iterations > 0:
                     #call the info to notify the observers to do their things
+                    
                     info = {"num_iterations":num_iterations//1000,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
                     self.notify(info)
                     #just print some informations every 1000 Iterations
@@ -113,7 +114,7 @@ class GANTrainer(ABC):
         # find highest epoch
         highest_epoch, latest_folder = max(epoch_dirs, key=lambda x: x[0])
         self.epoch = highest_epoch + 1
-        print(f"Previous training will be continued at epoch {highest_epoch}")
+        print(f"Previous training will be continued at iteration {highest_epoch} k")
         # load models
         for model_file in latest_folder.glob("*.pkl"):
             name = model_file.stem
@@ -129,7 +130,7 @@ class GANTrainer(ABC):
                 print(f"Loaded: {model_file}")
                 print("Start training")
             else:
-                print("make them normally distributed")
+                print("Initialize models normally distributed")
                 self.gen.apply(weights_init)
                 self.disc.apply(weights_init)
                 self.epoch = 1

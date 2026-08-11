@@ -14,12 +14,11 @@ class ModelSaver(Observer):
         self.save_path = save_path
     
     def update(self,info):
-        valid_keys = ["trainer","num_iterations","metric"]
         iterations = info["num_iterations"]
-        filename = f"iteration_{iterations//1000}k.pkl"
+        filename = f"iteration_{iterations}k.pkl"
         trainer = info["trainer"]
         # Ensure model folder exists
-        iteration_folder = f"iteration_{iterations//1000}k"
+        iteration_folder = f"iteration_{iterations}k"
         models_dir = os.path.join(self.save_path,"models",iteration_folder)
         os.makedirs(models_dir, exist_ok=True)
 
@@ -29,5 +28,6 @@ class ModelSaver(Observer):
         torch.save(trainer.optim_gen.state_dict(), os.path.join(models_dir,"Optimizer_gen" + filename))
         torch.save(trainer.optim_disc.state_dict(), os.path.join(models_dir,"Optimizer_disc" + filename))
         #information log
+        print(f"Models saved in {models_dir}")
         # tqdm.write(f"Models saved in {models_dir}")
         

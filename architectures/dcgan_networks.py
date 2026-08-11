@@ -2,6 +2,7 @@ from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDow
 from core.registries import GENERATORS, DISCRIMINATORS
 from torch import nn
 import math
+from regularisations import spectral_normalisation
 
 
 @GENERATORS.registry("dcgan")
@@ -54,6 +55,7 @@ class DCGANGenerator(nn.Module):
 
         self.model.append(getattr(nn,activation)())
         self.model = nn.Sequential(*self.model)
+        
 
     def forward(self, x):
         bs = x.size(0)
@@ -69,7 +71,8 @@ class DCGANDiscriminator(nn.Module):
                  out_shape:int,
                  in_channels:int,
                  block_type:str,
-                 activation:str):
+                 activation:str,
+                 spectral_norm:bool):
         super().__init__()
         self.model = []
         #computes the amount of layers to append to the desired out shape
@@ -101,7 +104,7 @@ class DCGANDiscriminator(nn.Module):
             elif block_type == "resnet":
 
                 if is_last:
-                    # letzter Block: 4x4 -> 1x1
+                    # last block: 4x4 -> 1x1
                     layer = nn.Conv2d(
                         in_dims[k],
                         out_dims[k],
@@ -121,6 +124,8 @@ class DCGANDiscriminator(nn.Module):
             self.model.append(activation)
 
         self.model = nn.Sequential(*self.model)
+        if spectral_norm:
+            spectral_normalisation.apply_spectral_normalization(self.model)
         
         
     def forward(self,x):

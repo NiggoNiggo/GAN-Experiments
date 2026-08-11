@@ -18,14 +18,10 @@ import training
 
 
 #torch summaray einbauen und speichern
-# parameter der modelle immer anzeigen lassen for dem Training
 # fixed noise für die generation eines nosies und dann damit immer das Training evaluieren
 # dann für jede epoche noch einen Ordner anlegen und mehrere Bilder speichern (batches oder einzelene bilder)
 # save allocated_memory and reserved_memory and time per epoch
-#parameter anzahl
 #more evaluation techniques
-#alles aus der yaml noch ion nem anderen Format speichern, damit falls die yaml gelöscht wird, nicht alle Infos verscwunden sind, dafür am besten die yaml auch noch in den Projektordner kopieren
-#Observer mal überprüfen, ob die wirklich noch funktionieren und auch sinnvoll sind?
 
 if __name__ == "__main__":
     #make training more efficient
@@ -34,8 +30,9 @@ if __name__ == "__main__":
     torch.set_float32_matmul_precision("high")
     torch.set_num_threads(8) 
  
-    # DCGAN Trainer
-    config_path = os.path.join("param_configs/dcgan_config.yaml")
+    # Call the Trainer
+    path = "wgan_config.yaml" #enter here the path of the desired GAN
+    config_path = os.path.join("param_configs",path)
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
@@ -43,6 +40,7 @@ if __name__ == "__main__":
     #register Training and calls the individual Trainer:
     trainer_cls = TRAINERS.get(cfg["training"]["name"])
     training = trainer_cls(cfg)
+    print(f"Loaded Trainer: {training}")
 
     save_path = os.path.join( cfg["training"]["args"]["save_path"], cfg["training"]["args"]["project_name"])
     training.attach(ModelSaver(save_path=save_path))

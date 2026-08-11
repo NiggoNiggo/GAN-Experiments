@@ -23,7 +23,6 @@ class PlotObserver(Observer):
         #if a instance of this training was done before the existing data frame with infos about training is loaded 
         file = self.path / self.filename
         if file.exists(): #filename should be send to trainer, because, then he knows which epoch to start and extend the training every time
-            print(f"initially read csv values from file: {self.filename}")
             return pd.read_csv(file)
         else:
             #return an empty data frame 
