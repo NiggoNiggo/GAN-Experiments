@@ -3,9 +3,13 @@ training:
   args:
     out_shape: 64
     channels: 3
-    project_name : wgan_celebTest
+    project_name : wgan_celebTest2
     save_path : /mnt/data2/gan_results
   
+metrics : 
+  fid : fid
+  # kid : kid
+  prd : prd
 
 generator: 
   name: dcgan
@@ -13,7 +17,7 @@ generator:
     out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : resnet
+    block_type : deconv
 
 discriminator:
   name: dcgan
@@ -21,7 +25,7 @@ discriminator:
     out_shape: 64
     in_channels : 3
     activation : none
-    block_type : resnet
+    block_type : deconv
     spectral_norm : false
 
 loss:
@@ -37,12 +41,12 @@ dataset:
   
 params:
   has_labels : false
-  batchsize: 512
+  batchsize: 128
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
-  iterations : 0
+  iterations : 30000
   beta1 : 0.0
   beta2 : 0.9
   lambda : 10
@@ -52,3 +56,7 @@ params:
 
 mode : gp #clipping
 
+
+
+
+#umstellen auf iterations nicht epochen  sp#äter

@@ -11,7 +11,7 @@ from core.registries import *
 from observer.observer_save import ModelSaver
 from observer.observer_plot_values import PlotObserver
 from observer.observer_make_plot_latent_gans import PlotLatentGANsObserver
-from observer.observer_evaluation import EvalObserver
+from observer.observer_evaluation import Evaluate
 # from plotting.loss_plotting import Plotting
 import training
 
@@ -43,13 +43,19 @@ if __name__ == "__main__":
     print(f"Loaded Trainer: {training}")
 
     save_path = os.path.join( cfg["training"]["args"]["save_path"], cfg["training"]["args"]["project_name"])
+    #observer saves the models
     training.attach(ModelSaver(save_path=save_path))
-    training.attach(EvalObserver())
+    
+    #observer write the csv file for plotting and statistics
     training.attach(PlotObserver(save_path,filename="values.csv"))
+    #observer evaluate 
+    evaluater = Evaluate(training.data_loader,training.device)
+    training.attach(evaluater)
+    #observer to produce some images for visual guidance
     training.attach(PlotLatentGANsObserver(num_images=64))
 
     #starting training
-    training.train(150)
+    training.train()
 
 
 

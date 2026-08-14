@@ -17,8 +17,6 @@
 9. **ResNetGAN** – ResNet-basierte Generatoren und Discriminatoren, populär durch WGAN-GP und spätere Arbeiten – Einführung von Residual-Blöcken in GAN-Architekturen.
 
 
-
-#hier gehts weiter
 8. **SpectralNorm** – *Spectral Normalization for Generative Adversarial Networks* (Miyato et al., 2018) – Lipschitz-Kontrolle über Spektralnorm der Gewichtsmatrizen.
 
 

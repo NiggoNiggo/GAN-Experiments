@@ -16,7 +16,7 @@ from data.wrappers import DataWrapper
 from core.optimizer_factory import AdamStrategy
 
 #importall the modules that are registred
-import architectures, loss_functions, data
+import architectures, loss_functions, data, observer, validation
 
 
 class GANTrainer(ABC):
@@ -62,24 +62,25 @@ class GANTrainer(ABC):
         batch_size = real.size(0)
         return batch_size, real, labels
     
-    def train(self, epochs):
-        num_iterations = (self.epoch - 1) * len(self.data_loader)
-        for epoch in range(self.epoch, self.epoch+epochs):
+    def train(self):
+        train_duration = range(self.num_iterations, self.num_iterations + self.cfg["params"]["iterations"])
+        print(f"Training for {len(train_duration)} iterations")
+        for epoch in train_duration:
             self.epoch = epoch
             pbar = tqdm(self.data_loader)
             for batch in pbar:
                 mem = torch.cuda.memory_reserved(self.device) / 1024**2
                 pbar.set_postfix(memory=f"{mem:.1f} MB")
                 d_loss, g_loss = self.train_step(batch)
-                num_iterations += 1
+                self.num_iterations += 1
                 #like for each epoch change to a comparable amount of batches computed
-                if num_iterations % 1000 == 0 and num_iterations > 0:
+                if self.num_iterations % 1000 == 0 and self.num_iterations > 0:
                     #call the info to notify the observers to do their things
                     
-                    info = {"num_iterations":num_iterations//1000,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
+                    info = {"num_iterations":self.num_iterations,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
                     self.notify(info)
                     #just print some informations every 1000 Iterations
-                    tqdm.write(f"Iterations {num_iterations//1000}k: D={d_loss:.4f} | G={g_loss:.4f}")
+                    tqdm.write(f"Iterations {self.num_iterations}: D={d_loss:.4f} | G={g_loss:.4f}")
             
 
     def init_project(self):
@@ -109,12 +110,15 @@ class GANTrainer(ABC):
                 if match:
                     epoch_dirs.append((int(match.group(1)), folder))
         if not epoch_dirs:
-            self.epoch = 1
+            # self.epoch = 1
+            self.num_iterations = 0
             return
         # find highest epoch
         highest_epoch, latest_folder = max(epoch_dirs, key=lambda x: x[0])
         self.epoch = highest_epoch + 1
         print(f"Previous training will be continued at iteration {highest_epoch} k")
+        self.num_iterations = highest_epoch
+        print("Training continoued Iteration: ", self.num_iterations)
         # load models
         for model_file in latest_folder.glob("*.pkl"):
             name = model_file.stem
@@ -133,7 +137,7 @@ class GANTrainer(ABC):
                 print("Initialize models normally distributed")
                 self.gen.apply(weights_init)
                 self.disc.apply(weights_init)
-                self.epoch = 1
+                self.num_iterations = 0
         
 
     def sample_images(self, num_img=64):

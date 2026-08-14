@@ -36,7 +36,8 @@ class FileOrganizer():
         # values_csv contains different files that save the values for losses, metrics in csv files for offline plotting
         #real_samples contains each epoch a batch of generated samples
         #model
-        folders = ["fake","values_csv","loss_plot","models",]
+        #helper_models contains files that correspond to pre trained models for evaluation particulary: inception and vgg for fid and is score... and the features for the real data 
+        folders = ["fake","values_csv","loss_plot","models","helper_models"]
         for folder in folders:
             #new path with additional folder
             new_path = Path(path) / folder
@@ -45,8 +46,8 @@ class FileOrganizer():
     
     def make_files(self):
         for r,d,f in os.walk(Path(self.path) / self.filename):
-            if d == "values_csv":
-                filename = "metric_values"
+            if "values_csv" in d:
+                filename = "values.csv"
                 path = Path(r) / filename
                 with open(path,"w") as f:
                     pass
