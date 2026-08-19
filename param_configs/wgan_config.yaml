@@ -29,6 +29,7 @@ discriminator:
 
 loss:
   name: wgan_gp
+  label_smoothing : false
 
 augmentation:
   args:

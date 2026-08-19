@@ -190,7 +190,7 @@ class GANTrainer(ABC):
         if label_smoothing:
             self.loss_fn = loss(True)
         else:
-            self.loss_fn = loss(False)
+            self.loss_fn = loss()
         
         #load the data
         transform = T.Compose([
