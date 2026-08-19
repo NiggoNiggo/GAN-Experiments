@@ -25,6 +25,7 @@ discriminator:
 
 loss:
   name: hinge
+  label_smoothing : false #only useful with normal vanilla loss -> name : vanilla
 
 augmentation:
   args:

@@ -50,7 +50,6 @@ class Evaluate:
         }
         #compute the metrics and save it to the results
         for name, metric in self.metrics.items():
-            print(f"Compute {name}....")
             value = metric.compute(fake_data,trainer)
             results[name] = value
 

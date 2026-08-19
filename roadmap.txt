@@ -1,7 +1,4 @@
-
-
-
-# Chatty's suggestions:
+# Chatty's suggestions for reading and implementing:
 1. **GAN** – *Generative Adversarial Nets* (Goodfellow et al., 2014) – Ursprüngliches GAN-Paper, führt Generator und Discriminator ein.  DONE
 
 2. **cGAN** – *Conditional Generative Adversarial Nets* (Mirza & Osindero, 2014) – GANs mit zusätzlicher Konditionierung über Labels oder andere Informationen. DONE
@@ -21,6 +18,10 @@
 
 
 7. **R1 / R2** – *Which Training Methods for GANs do actually Converge?* (Mescheder et al., 2018) – Regularisierung auf Real- bzw. Fake-Samples zur Stabilisierung.
+
+Improved Techniques for Training GANs
+ON CONVERGENCE AND STABILITY OF GANS
+The Numerics of GANs
 
 
 10. **HingeGAN** – Hinge-Loss-basierte GANs (u. a. Geometric GAN, später SAGAN/BigGAN) – Moderner Standard-Loss für viele GANs.

@@ -3,13 +3,12 @@ training:
   args:
     out_shape: 64
     channels: 3
-    project_name : wgan_celebTest2
+    project_name : spectral_norm_wgan_celeb
     save_path : /mnt/data2/gan_results
   
 metrics : 
   fid : fid
-  # kid : kid
-  prd : prd
+  prd : prd #precision and recall 
 
 generator: 
   name: dcgan
@@ -17,7 +16,7 @@ generator:
     out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : deconv
+    block_type : resnet
 
 discriminator:
   name: dcgan
@@ -25,8 +24,8 @@ discriminator:
     out_shape: 64
     in_channels : 3
     activation : none
-    block_type : deconv
-    spectral_norm : false
+    block_type : resnet
+    spectral_norm : true
 
 loss:
   name: wgan_gp
@@ -41,12 +40,13 @@ dataset:
   
 params:
   has_labels : false
-  batchsize: 128
+  batchsize: 256
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
   iterations : 30000
+  logging_iterations : 1000
   beta1 : 0.0
   beta2 : 0.9
   lambda : 10

@@ -74,7 +74,7 @@ class GANTrainer(ABC):
                 d_loss, g_loss = self.train_step(batch)
                 self.num_iterations += 1
                 #like for each epoch change to a comparable amount of batches computed
-                if self.num_iterations % 1000 == 0 and self.num_iterations > 0:
+                if self.num_iterations % self.cfg["params"]["logging_iterations"] == 0 and self.num_iterations > 0:
                     #call the info to notify the observers to do their things
                     
                     info = {"num_iterations":self.num_iterations,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
@@ -116,7 +116,7 @@ class GANTrainer(ABC):
         # find highest epoch
         highest_epoch, latest_folder = max(epoch_dirs, key=lambda x: x[0])
         self.epoch = highest_epoch + 1
-        print(f"Previous training will be continued at iteration {highest_epoch} k")
+        print(f"Previous training will be continued at iteration {highest_epoch}")
         self.num_iterations = highest_epoch
         print("Training continoued Iteration: ", self.num_iterations)
         # load models
@@ -184,7 +184,13 @@ class GANTrainer(ABC):
 
         #load the loss function
         loss = LOSSES.get(self.cfg["loss"]["name"])
-        self.loss_fn = loss()
+        #label smooting preferable only at normal gan loss with bce 
+        label_smoothing = self.cfg["loss"]["label_smoothing"]
+        #apply label smooting
+        if label_smoothing:
+            self.loss_fn = loss(True)
+        else:
+            self.loss_fn = loss(False)
         
         #load the data
         transform = T.Compose([

@@ -9,9 +9,10 @@ from core.registries import *
 
 #maybe this is is also possible to register?
 from observer.observer_save import ModelSaver
-from observer.observer_plot_values import PlotObserver
+from observer.observer_plot_loss import PlotObserver
 from observer.observer_make_plot_latent_gans import PlotLatentGANsObserver
 from observer.observer_evaluation import Evaluate
+from observer.observer_logging_data import LoggingData
 # from plotting.loss_plotting import Plotting
 import training
 
@@ -46,11 +47,15 @@ if __name__ == "__main__":
     #observer saves the models
     training.attach(ModelSaver(save_path=save_path))
     
-    #observer write the csv file for plotting and statistics
-    training.attach(PlotObserver(save_path,filename="values.csv"))
+   
     #observer evaluate 
     evaluater = Evaluate(training.data_loader,training.device)
+    #creates csv
+    training.attach(LoggingData())
+    #computes validation
     training.attach(evaluater)
+     #observer write the csv file for plotting and statistics
+    training.attach(PlotObserver())
     #observer to produce some images for visual guidance
     training.attach(PlotLatentGANsObserver(num_images=64))
 
