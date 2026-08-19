@@ -23,6 +23,7 @@ discriminator:
     block_type : deconv
     activation : Sigmoid
     spectral_norm : true
+    minibatch_discrimination : true
 
 loss:
   name: feature_matching
@@ -44,12 +45,12 @@ metrics :
   
 params:
   has_labels : false
-  batchsize: 512
+  batchsize: 1024
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
-  logging_iterations : 300
+  logging_iterations : 1000
   iterations : 30000
   beta1 : 0.5
   beta2 : 0.99

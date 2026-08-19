@@ -1,4 +1,4 @@
-from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDown
+from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDown, MiniBatchDiscrimination
 from core.registries import GENERATORS, DISCRIMINATORS
 from torch import nn
 import math
@@ -73,9 +73,11 @@ class DCGANDiscriminator(nn.Module):
                  in_channels:int,
                  block_type:str,
                  activation:str,
-                 spectral_norm:bool):
+                 spectral_norm:bool,
+                 minibatch_discrimination:bool):
         super().__init__()
         self.model = []
+        self.minibatch_discrimination = minibatch_discrimination
         #computes the amount of layers to append to the desired out shape
         num_layers = int(math.log2(out_shape)) -1
         #create the in dimensions with start 64 and increase the power of 2
@@ -84,40 +86,63 @@ class DCGANDiscriminator(nn.Module):
         
         #assert that in and out dims have the same amout of values
         assert len(in_dims) == len(out_dims)
-        #more asserts
-        #last out_dim = out_dim
-        # etc
-
 
         for k in range(num_layers):
             is_last = (k == num_layers - 1)
-
-            if block_type == "deconv":
-                layer = ConvLayer(
-                    input_dim=in_dims[k],
-                    output_dim=out_dims[k],
-                    kernel_size=4,
-                    stride=1 if is_last else 2,
-                    padding=0 if is_last else 1,
-                    batch_norm=False #(k > 0)
-                )
-
-            elif block_type == "resnet":
-
-                if is_last:
-                    # last block: 4x4 -> 1x1
-                    layer = nn.Conv2d(
+            #if is the last layer and minibatch discrimination is inacitve
+            if is_last and not self.minibatch_discrimination:
+                if block_type == "deconv":
+                    layer = ConvLayer(
+                        input_dim=in_dims[k],
+                        output_dim=out_dims[k],
+                        kernel_size=4,
+                        stride=1 if is_last else 2,
+                        padding=0 if is_last else 1,
+                        batch_norm=False #(k > 0)
+                    )
+                elif block_type == "resnet":
+                    if is_last:
+                        # last block: 4x4 -> 1x1
+                        layer = nn.Conv2d(
+                            in_dims[k],
+                            out_dims[k],
+                            kernel_size=4,
+                            stride=1,
+                            padding=0
+                        )
+                    else:
+                        layer = ResNETLayerDown(in_dims[k],out_dims[k],batch_norm=False)
+                self.model.append(layer)
+            #normal case is not the last layer any intermediate layer
+            elif not is_last:
+                if block_type == "deconv":
+                    layer = ConvLayer(
+                        input_dim=in_dims[k],
+                        output_dim=out_dims[k],
+                        kernel_size=4,
+                        stride=2,
+                        padding=1,
+                        batch_norm=False
+                    )
+                elif block_type == "resnet":
+                    layer = ResNETLayerDown(
                         in_dims[k],
                         out_dims[k],
-                        kernel_size=4,
-                        stride=1,
-                        padding=0
+                        batch_norm=False
                     )
+                self.model.append(layer)
+            
+            elif is_last and self.minibatch_discrimination:
+                feature_channels = in_dims[k]
+                feature_size = 4
+                in_features = feature_channels * feature_size * feature_size
 
-                else:
-
-                    layer = ResNETLayerDown(in_dims[k],out_dims[k],batch_norm=False)
-            self.model.append(layer)
+                mbd = MiniBatchDiscrimination(in_features=in_features,
+                                            num_kernels=100,
+                                            kernel_dim=5)
+                self.model.append(nn.Flatten())
+                self.model.append(mbd)
+                self.model.append(nn.Linear(in_features+100,1))
 
 
         if activation.lower() != "none":

@@ -1,6 +1,7 @@
 from torch import nn
 from core.registries import BLOCKS
 import torch.nn.functional as F
+import torch
 
 
 @BLOCKS.registry("linear")
@@ -116,3 +117,34 @@ class ResNETLayerDown(nn.Module):
 
     def forward(self,x):
         return self.skip(x) + self.model(x)
+
+
+@BLOCKS.registry("minibatch_discrimination")
+class MiniBatchDiscrimination(nn.Module):
+    def __init__(self,
+                 in_features,
+                 num_kernels,
+                 kernel_dim):
+        super().__init__()
+        self.num_kernels = num_kernels
+        self.kernel_dim = kernel_dim
+        self.in_features = in_features
+        # self.T = nn.Linear(in_features,num_kernels * kernel_dim,bias=False)
+        self.T = nn.Parameter(torch.randn(in_features,num_kernels*kernel_dim))
+
+    def forward(self,x):
+        #multiply with learnarble params
+        # M = self.T(x)
+        M = x @ self.T
+        #reshape to bs,nk,kd
+        M = M.view(x.size(0),self.num_kernels,self.kernel_dim)
+        # pairwise distances
+        diff = M.unsqueeze(0) - M.unsqueeze(1)
+        #sum the differences
+        distance = torch.abs(diff).sum(dim=3)
+        # negative distance
+        similarity = torch.exp(-distance)
+        # aggregate over other samples
+        o = similarity.sum(dim=1)
+        x = torch.cat([x, o], dim=1)
+        return x

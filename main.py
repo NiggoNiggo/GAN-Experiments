@@ -58,8 +58,8 @@ if __name__ == "__main__":
     training.attach(PlotObserver())
     #observer to produce some images for visual guidance
     training.attach(PlotLatentGANsObserver(num_images=64))
-
     #starting training
+    print(training.gen,training.disc)
     training.train()
 
 
