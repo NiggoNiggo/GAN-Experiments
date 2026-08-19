@@ -2,6 +2,7 @@ from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDow
 from core.registries import GENERATORS, DISCRIMINATORS
 from torch import nn
 import math
+import torch
 from regularisations import spectral_normalisation
 
 
@@ -126,10 +127,19 @@ class DCGANDiscriminator(nn.Module):
         self.model = nn.Sequential(*self.model)
         if spectral_norm:
             spectral_normalisation.apply_spectral_normalization(self.model)
+
+        self.feature_layer = len(self.model) // 2
         
-        
-    def forward(self,x):
-        return self.model(x)
+    def forward(self, x, return_features=False):
+        features = None
+        for i, layer in enumerate(self.model):
+            x = layer(x)
+            #feature layer for feature matching
+            if return_features and i == self.feature_layer:
+                features = x
+        if return_features:
+            return x.view(-1), features
+        return x.view(-1)
 
 
 

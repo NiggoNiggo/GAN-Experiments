@@ -1,31 +1,32 @@
 training:
   name: dcgan
   args:
-    out_shape: 256
+    out_shape: 64
     channels: 3
-    project_name : lsun_256x256
+    project_name : test_feature_matching_label_smoothin 
     save_path : /mnt/data2/gan_results
     
 
 generator: 
   name: dcgan
   args: 
-    out_shape : 256
+    out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : resnet
+    block_type : deconv
 
 discriminator:
   name: dcgan
   args:
-    out_shape: 256
+    out_shape: 64
     in_channels : 3
-    block_type : resnet
-    activation : none
+    block_type : deconv
+    activation : Sigmoid
+    spectral_norm : true
 
 loss:
-  name: hinge
-  label_smoothing : false #only useful with normal vanilla loss -> name : vanilla
+  name: feature_matching
+  label_smoothing : true #only useful with normal vanilla loss -> name : vanilla, feature_matching
 
 augmentation:
   args:
@@ -33,17 +34,23 @@ augmentation:
 
 dataset:
   name : general
-  data_path : /mnt/data2/datasets/lsun/train
-  # data_path : /mnt/data2/datasets/celebA/img_align_celeba
+  # data_path : /mnt/data2/datasets/lsun/train
+  data_path : /mnt/data2/datasets/celebA/img_align_celeba
+
+metrics : 
+  fid : fid
+  prd : prd #precision and recall 
+
   
 params:
   has_labels : false
-  batchsize: 32
+  batchsize: 512
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
-  iterations : 0
+  logging_iterations : 300
+  iterations : 30000
   beta1 : 0.5
   beta2 : 0.99
 

@@ -28,11 +28,22 @@ class DCGANTrainer(GANTrainer):
 
         return d_loss.item()
 
-    def train_gen(self, batch_size):
-        z = torch.randn(batch_size, self.latent_dim, 1, 1, device=self.device)
+    def train_gen(self,
+                  real):
+        z = torch.randn(real.size(0), self.latent_dim, 1, 1, device=self.device)
         fake_data = self.gen(z)
-        fake_pred = self.disc(fake_data).view(-1)
-        g_loss = self.loss_fn.gen_loss(fake_pred)
+        #if feature matching change the loss of the generator with additional features
+        if self.cfg["loss"]["name"] == "feature_matching":
+            #compute only features for an intermediate layer 
+            fake_pred,fake_features = self.disc(fake_data,return_features=True)
+            real_pred, real_features = self.disc(real,return_features=True)
+            real_features = real_features.detach()
+            #call loss with additional real features 
+            g_loss = self.loss_fn.gen_loss(real_features,fake_features)
+
+        else:
+            fake_pred = self.disc(fake_data).view(-1)
+            g_loss = self.loss_fn.gen_loss(fake_pred)
         self.optim_gen.zero_grad()
         g_loss.backward()
         self.optim_gen.step()
@@ -43,7 +54,7 @@ class DCGANTrainer(GANTrainer):
     def train_step(self, batch):
         d_loss = self.train_disc(batch)
         batch_size, real, labels = self.ensure_correct_input(batch)
-        g_loss = self.train_gen(batch_size)
+        g_loss = self.train_gen(real)
 
 
         return d_loss, g_loss

@@ -32,7 +32,7 @@ if __name__ == "__main__":
     torch.set_num_threads(8) 
  
     # Call the Trainer
-    path = "wgan_config.yaml" #enter here the path of the desired GAN
+    path = "dcgan_config.yaml" #enter here the path of the desired GAN
     config_path = os.path.join("param_configs",path)
     with open(config_path) as f:
         cfg = yaml.safe_load(f)

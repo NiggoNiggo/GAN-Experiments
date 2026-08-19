@@ -1,13 +1,13 @@
-import torch 
-from torch import nn
 from core.registries import LOSSES
+import torch
 
-@LOSSES.registry("vanilla")
-class VanillaGANLoss:
+
+@LOSSES.registry("feature_matching")
+class FeatureMatching:
     def __init__(self,
                  label_smoothing=False):
         super().__init__()
-        self.loss = nn.BCELoss()
+        self.loss = torch.nn.BCELoss()
         self.label_smoothing = label_smoothing
 
     def disc_loss(self, real_pred, fake_pred):
@@ -24,8 +24,8 @@ class VanillaGANLoss:
         return loss_real + loss_fake
 
     def gen_loss(self,
-                 fake_pred):
-        targets = torch.ones_like(fake_pred)
-        return self.loss(fake_pred, targets)
-
-        
+                 real_features, 
+                 fake_features):
+        real_mean = torch.mean(real_features,dim=0)
+        fake_mean = torch.mean(fake_features,dim=0)
+        return torch.mean((real_mean-fake_mean)**2)
