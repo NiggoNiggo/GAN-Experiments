@@ -22,7 +22,7 @@ import training
 # fixed noise für die generation eines nosies und dann damit immer das Training evaluieren
 # dann für jede epoche noch einen Ordner anlegen und mehrere Bilder speichern (batches oder einzelene bilder)
 # save allocated_memory and reserved_memory and time per epoch
-#more evaluation techniques
+
 
 if __name__ == "__main__":
     #make training more efficient
@@ -59,7 +59,6 @@ if __name__ == "__main__":
     #observer to produce some images for visual guidance
     training.attach(PlotLatentGANsObserver(num_images=64))
     #starting training
-    print(training.gen,training.disc)
     training.train()
 
 

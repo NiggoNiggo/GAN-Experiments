@@ -14,7 +14,12 @@ class PrecisionAndRecall:
                 dataloader,
                 num_samples,
                 device):
-        self.real_dataloader = dataloader
+        self.real_dataloader = torch.utils.data.DataLoader(
+            dataloader.dataset,
+            batch_size=512,
+            shuffle=False,
+        )
+        
         self.num_samples = num_samples
         self.device = device
         #initialize the model inception v3 up to 3 conv layer

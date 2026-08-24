@@ -153,17 +153,26 @@ class DCGANDiscriminator(nn.Module):
         if spectral_norm:
             spectral_normalisation.apply_spectral_normalization(self.model)
 
-        self.feature_layer = len(self.model) // 2
+        #find last layer with conv for features for feature matching
+        for module in reversed(list(self.model.modules())):
+            if isinstance(module, nn.Conv2d):
+                self.feature_layer = module
+                break
         
+        self.features = None
+
+        def save_features(module, input, output):
+            self.features = output
+
+        self.feature_hook = self.feature_layer.register_forward_hook(save_features)
+
     def forward(self, x, return_features=False):
         features = None
         for i, layer in enumerate(self.model):
             x = layer(x)
             #feature layer for feature matching
-            if return_features and i == self.feature_layer:
-                features = x
         if return_features:
-            return x.view(-1), features
+            return x.view(-1), self.features
         return x.view(-1)
 
 

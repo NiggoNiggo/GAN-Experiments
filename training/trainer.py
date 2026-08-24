@@ -23,10 +23,9 @@ class GANTrainer(ABC):
     def __init__(self, 
                  config
                ):
-
+        #load this config if the project exists and params need to be changed in the folder yaml file then
         self.cfg = config
-        #ensure that no network is None, because more complex gans like cyclegan initiate their own gens and disc and set them to zero
-        #make the optimizer, but this should be more clearer in future
+    
         
         #observers for further functionality
         self.observers = []
@@ -63,6 +62,7 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self):
+        print(self.num_iterations, self.cfg["params"]["iterations"])
         train_duration = range(self.num_iterations, self.num_iterations + self.cfg["params"]["iterations"])
         print(f"Training for {len(train_duration)} iterations")
         for epoch in train_duration:
@@ -77,10 +77,10 @@ class GANTrainer(ABC):
                 if self.num_iterations % self.cfg["params"]["logging_iterations"] == 0 and self.num_iterations > 0:
                     #call the info to notify the observers to do their things
                     
-                    info = {"num_iterations":self.num_iterations,"trainer":self,"loss_d":round(d_loss,6),"loss_g":round(g_loss,6)}
+                    info = {"num_iterations":self.num_iterations,"trainer":self,"loss_d":round(d_loss,10),"loss_g":round(g_loss,10)}
                     self.notify(info)
                     #just print some informations every 1000 Iterations
-                    tqdm.write(f"Iterations {self.num_iterations}: D={d_loss:.4f} | G={g_loss:.4f}")
+                    tqdm.write(f"Iterations {self.num_iterations}: D={d_loss:.10f} | G={g_loss:.10f}")
             
 
     def init_project(self):
@@ -97,48 +97,102 @@ class GANTrainer(ABC):
 
 
     def init_models(self):
-        print("..... init models.....")
+        print("..... init models .....")
         models_root = Path(self.save_path) / self.filename / "models"
         if not models_root.exists():
+            print(f"Kein models-Ordner gefunden: {models_root}")
+            print("Starte Training von Iteration 0.")
+            self.num_iterations = 0
             self.epoch = 1
-            print("Beginn training von Epoch 1....")
-        # search for highest iteration saved 
+            self.gen.apply(weights_init)
+            self.disc.apply(weights_init)
+            return
+        
         epoch_dirs = []
         for folder in models_root.iterdir():
-            if folder.is_dir():
-                match = re.match(r"iteration_(\d+)k", folder.name)
-                if match:
-                    epoch_dirs.append((int(match.group(1)), folder))
-        if not epoch_dirs:
-            # self.epoch = 1
-            self.num_iterations = 0
-            return
-        # find highest epoch
-        highest_epoch, latest_folder = max(epoch_dirs, key=lambda x: x[0])
-        self.epoch = highest_epoch + 1
-        print(f"Previous training will be continued at iteration {highest_epoch}")
-        self.num_iterations = highest_epoch
-        print("Training continoued Iteration: ", self.num_iterations)
-        # load models
-        for model_file in latest_folder.glob("*.pkl"):
-            name = model_file.stem
-            if name == "Generator":
-                attr = "gen"
-            elif name == "Discriminator":
-                attr = "disc"
-            else:
+            if not folder.is_dir():
                 continue
-            if hasattr(self, attr):
-                state_dict = torch.load(model_file, weights_only=True)
-                getattr(self, attr).load_state_dict(state_dict)
-                print(f"Loaded: {model_file}")
-                print("Start training")
-            else:
-                print("Initialize models normally distributed")
-                self.gen.apply(weights_init)
-                self.disc.apply(weights_init)
-                self.num_iterations = 0
-        
+            match = re.match(r"iteration_(\d+)k?$", folder.name)
+            if match:
+                iteration = int(match.group(1))
+                epoch_dirs.append((iteration, folder))
+
+        if not epoch_dirs:
+            print("Keine Checkpoints gefunden.")
+            print("Starte Training von Iteration 0.")
+            self.num_iterations = 0
+            self.epoch = 1
+            self.gen.apply(weights_init)
+            self.disc.apply(weights_init)
+            return
+
+        highest_iteration, latest_folder = max(epoch_dirs,key=lambda x: x[0])
+        self.num_iterations = highest_iteration
+        self.epoch = highest_iteration + 1
+        print()
+        print("========================================")
+        print("CHECKPOINT GEFUNDEN")
+        print("========================================")
+        print(f"Checkpoint: {latest_folder}")
+        print(f"Iteration:  {highest_iteration}")
+        print("========================================")
+
+        generator_file = latest_folder / "Generator.pkl"
+        if generator_file.exists():
+            print(f"Lade Generator: {generator_file}")
+            state_dict = torch.load(generator_file,map_location=self.device,weights_only=True)
+            self.gen.load_state_dict(state_dict)
+            print("✓ Generator erfolgreich geladen")
+        else:
+            raise FileNotFoundError(
+                f"Generator checkpoint nicht gefunden:\n"
+                f"{generator_file}"
+            )
+        discriminator_file = latest_folder / "Discriminator.pkl"
+        if discriminator_file.exists():
+            print(f"Lade Discriminator: {discriminator_file}")
+            state_dict = torch.load(discriminator_file,map_location=self.device,weights_only=True)
+            self.disc.load_state_dict(state_dict)
+            print("✓ Discriminator erfolgreich geladen")
+        else:
+            raise FileNotFoundError(
+                f"Discriminator checkpoint nicht gefunden:\n"
+                f"{discriminator_file}"
+            )
+
+        optimizer_gen_file = latest_folder / "Optimizer_gen.pkl"
+        if optimizer_gen_file.exists():
+            print(f"Lade Generator Optimizer: {optimizer_gen_file}")
+            optimizer_state = torch.load(optimizer_gen_file,map_location=self.device,weights_only=True)
+            self.optim_gen.load_state_dict(optimizer_state)
+            print("✓ Generator Optimizer erfolgreich geladen")
+        else:
+            raise FileNotFoundError(
+                f"Generator Optimizer checkpoint nicht gefunden:\n"
+                f"{optimizer_gen_file}"
+            )
+
+        optimizer_disc_file = latest_folder / "Optimizer_disc.pkl"
+        if optimizer_disc_file.exists():
+            print(f"Lade Discriminator Optimizer: {optimizer_disc_file}")
+            optimizer_state = torch.load(optimizer_disc_file,map_location=self.device,weights_only=True)
+            self.optim_disc.load_state_dict(optimizer_state)
+            print("✓ Discriminator Optimizer erfolgreich geladen")
+        else:
+            raise FileNotFoundError(
+                f"Discriminator Optimizer checkpoint nicht gefunden:\n"
+                f"{optimizer_disc_file}"
+            )
+        print()
+        print("========================================")
+        print("TRAINING WIRD FORTGESETZT")
+        print("========================================")
+        print(f"Start iteration:    {self.num_iterations}")
+        print(f"Generator:          {generator_file}")
+        print(f"Discriminator:       {discriminator_file}")
+        print(f"Generator Optimizer: {optimizer_gen_file}")
+        print(f"Discriminator Optimizer: {optimizer_disc_file}")
+        print("========================================")
 
     def sample_images(self, num_img=64):
         imgs = self.plotter.sample_images(num_img)
@@ -188,7 +242,7 @@ class GANTrainer(ABC):
         label_smoothing = self.cfg["loss"]["label_smoothing"]
         #apply label smooting
         if label_smoothing:
-            self.loss_fn = loss(True)
+            self.loss_fn = loss(label_smoothing)
         else:
             self.loss_fn = loss()
         

@@ -3,7 +3,7 @@ training:
   args:
     out_shape: 64
     channels: 3
-    project_name : test_feature_matching_label_smoothin 
+    project_name : resnet_sn_fm 
     save_path : /mnt/data2/gan_results
     
 
@@ -13,21 +13,23 @@ generator:
     out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : deconv
+    block_type : resnet
 
 discriminator:
   name: dcgan
   args:
     out_shape: 64
     in_channels : 3
-    block_type : deconv
-    activation : Sigmoid
+    block_type : resnet
+    activation : none
     spectral_norm : true
-    minibatch_discrimination : true
+    minibatch_discrimination : false
 
 loss:
-  name: feature_matching
-  label_smoothing : true #only useful with normal vanilla loss -> name : vanilla, feature_matching
+  name: hinge
+  label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
+  # feature_matching # add lambda as hyperparameter
+  lambda : 5
 
 augmentation:
   args:
@@ -45,13 +47,14 @@ metrics :
   
 params:
   has_labels : false
-  batchsize: 1024
+  batchsize: 256
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
   logging_iterations : 1000
-  iterations : 30000
+  iterations : 100000
   beta1 : 0.5
   beta2 : 0.99
+  n_crit : 5
 

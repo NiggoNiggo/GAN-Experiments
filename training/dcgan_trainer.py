@@ -37,9 +37,12 @@ class DCGANTrainer(GANTrainer):
             #compute only features for an intermediate layer 
             fake_pred,fake_features = self.disc(fake_data,return_features=True)
             real_pred, real_features = self.disc(real,return_features=True)
-            real_features = real_features.detach()
+            real_features = real_features
             #call loss with additional real features 
-            g_loss = self.loss_fn.gen_loss(real_features,fake_features)
+            g_loss = self.loss_fn.gen_loss(real_features,
+                                           fake_features,
+                                           real_pred,
+                                           fake_pred)
 
         else:
             fake_pred = self.disc(fake_data).view(-1)
@@ -52,7 +55,10 @@ class DCGANTrainer(GANTrainer):
 
 
     def train_step(self, batch):
-        d_loss = self.train_disc(batch)
+        d_loss = 0
+        for k in range(self.cfg["params"]["n_crit"]):
+            d_loss += self.train_disc(batch)
+        d_loss /= self.cfg["params"]["n_crit"]
         batch_size, real, labels = self.ensure_correct_input(batch)
         g_loss = self.train_gen(real)
 
