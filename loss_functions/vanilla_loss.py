@@ -17,7 +17,7 @@ class VanillaGANLoss:
             fake_targets = torch.zeros_like(fake_pred)
         else:
             real_targets = torch.ones_like(real_pred)
-            fake_targets = torch.ones_like(fake_pred)
+            fake_targets = torch.zeros_like(fake_pred)
         loss_real = self.loss(real_pred, real_targets)
         loss_fake = self.loss(fake_pred, fake_targets)
 

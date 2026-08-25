@@ -7,6 +7,8 @@ The primary objective of the project is to systematically investigate the intera
 Unfortunately, the project is ongoing, therefore the READme is not up to data and will only be updated randomly. Please find the description and interpretation of results in the pdf file contained in the foundation folder.
 
 
+Untill now please don't expect much of this project... it is ongoing and many changes will come in future, but this project should give you an historically overview of GANs and the impact of each new invention. 
+
 
 ### Structure
 

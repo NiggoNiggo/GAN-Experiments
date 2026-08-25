@@ -76,6 +76,38 @@
       \field{title}{Generative Adversarial Nets}
       \field{year}{2014}
     \endentry
+    \entry{radford2016dcgan}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=a812c46caad94fc8701be37871f303ba}{%
+           family={Radford},
+           familyi={R\bibinitperiod},
+           given={Alec},
+           giveni={A\bibinitperiod}}}%
+        {{hash=1a5dc3b488533e7e2dff1b6b8568678d}{%
+           family={Metz},
+           familyi={M\bibinitperiod},
+           given={Luke},
+           giveni={L\bibinitperiod}}}%
+        {{hash=8ef51a0906e47d2b4472c4e714ed598f}{%
+           family={Chintala},
+           familyi={C\bibinitperiod},
+           given={Soumith},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{fullhash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{bibnamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authorbibnamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authornamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authorfullhash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \field{sortinit}{R}
+      \field{sortinithash}{5e1c39a9d46ffb6bebd8f801023a9486}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{International Conference on Learning Representations}
+      \field{title}{Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks}
+      \field{year}{2016}
+    \endentry
   \enddatalist
 \endrefsection
 \endinput
