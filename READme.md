@@ -4,7 +4,7 @@ This project provides a collection of implementations of various Generative Adve
 The theoretical foundations and key concepts are documented in the \textit{foundation} directory, where the underlying methods and their respective principles are summarized and explained. A dedicated summary chapter provides a comparative analysis of the implemented approaches.
 
 The primary objective of the project is to systematically investigate the interaction between different GAN architectures, loss functions, and regularization techniques, with a particular focus on identifying combinations that provide stable and reliable training.
-Unfortunately, the project is ongoing, therefore the READme is not up to data and will only be updated randomly.
+Unfortunately, the project is ongoing, therefore the READme is not up to data and will only be updated randomly. Please find the description and interpretation of results in the pdf file contained in the foundation folder.
 
 
 
