@@ -5,8 +5,6 @@
 *.log
 *.xml
 *.bcf
-*.bibtex
 *.out
 *.gz
 *.toc
-*.png
