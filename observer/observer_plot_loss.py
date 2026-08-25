@@ -34,17 +34,17 @@ class PlotObserver(Observer):
         ax[0].plot(t, data["loss_g"], label="Gen Loss")
         ax[0].legend()
         # FID
-        ax[1].set_title(f"FID min: {min(data["FID"])}")
+        ax[1].set_title(f"FID min: {data['FID'].min():.2f}")
         ax[1].set_xlabel("Iterations")
         ax[1].plot(t, data["FID"], label="FID")
         ax[1].legend()
         # IS
-        ax[2].set_title("IS")
+        ax[2].set_title(f"IS max: {data['IS'].max():.2f}")
         ax[2].set_xlabel("Iterations")
-        ax[2].plot(t, data["IS"], label=f"IS max: {max(data["IS"])}")
+        ax[2].plot(t, data["IS"], label="IS")
         ax[2].legend()
         # KID
-        ax[3].set_title(f"KID min: {min(data["KID"])}")
+        ax[3].set_title(f"KID min: {data['KID'].min():5f}")
         ax[3].set_xlabel("Iterations")
         ax[3].plot(t, data["KID"], label="KID")
         ax[3].legend()

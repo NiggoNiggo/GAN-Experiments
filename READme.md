@@ -1,6 +1,9 @@
 ### This Repository implements a historical overview of *Generative Adversarial Networks*
+This project provides a collection of implementations of various Generative Adversarial Network (GAN) architectures, loss functions, and regularization techniques. It can be viewed as a methodological journey through the development of GANs, starting with the original Vanilla GAN and progressing to more advanced architectures such as DCGAN and WGAN, with the eventual goal of exploring modern state-of-the-art approaches such as StyleGAN.
 
-In this project you can find various GAN implementations, loss functions and regularizations. In Conclusion, this could be seen as a historical path to modern GAN architectures. It starts with very basic vanilla GAN process to more advanced architectures like WGAN and DCGAN and will finally reach to modern state of the art GANs like StyleGAN. 
+The theoretical foundations and key concepts are documented in the \textit{foundation} directory, where the underlying methods and their respective principles are summarized and explained. A dedicated summary chapter provides a comparative analysis of the implemented approaches.
+
+The primary objective of the project is to systematically investigate the interaction between different GAN architectures, loss functions, and regularization techniques, with a particular focus on identifying combinations that provide stable and reliable training.
 Unfortunately, the project is ongoing, therefore the READme is not up to data and will only be updated randomly.
 
 

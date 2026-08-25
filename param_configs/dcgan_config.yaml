@@ -21,12 +21,12 @@ discriminator:
     out_shape: 64
     in_channels : 3
     block_type : resnet
-    activation : none
+    activation : Sigmoid
     spectral_norm : true
     minibatch_discrimination : false
 
 loss:
-  name: hinge
+  name: feature_matching
   label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
   # feature_matching # add lambda as hyperparameter
   lambda : 5

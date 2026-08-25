@@ -3,3 +3,10 @@
 *.fdb_latexmk
 *.fls
 *.log
+*.xml
+*.bcf
+*.bibtex
+*.out
+*.gz
+*.toc
+*.png
