@@ -1,0 +1,34 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Methods}
+\label{sec:methods}
+
+\section{Combinations tried}
+\label{sec:combinations_tried}
+An exemplary overview of the structure that will follow soon, some trainings are in progress.
+
+\begin{table}[H]
+    \centering
+    \caption{Overview of the evaluated GAN configurations.}
+    \label{tab:gan_configurations}
+    \begin{tabular}{c l l l}
+        \toprule
+        ID & Architecture & Loss & Regularization \\
+        \midrule
+        A & DCGAN & Vanilla GAN & None \\
+        B & DCGAN & LSGAN & Spectral Normalization \\
+        C & DCGAN & LSGAN + Feature Matching & Spectral Normalization \\
+        D & DCGAN & LSGAN & Minibatch Discrimination \\
+        E & DCGAN & LSGAN & Label Smoothing \\
+        F & DCGAN & LSGAN & Spectral Normalization + Label Smoothing \\
+        G & DCGAN & LSGAN & Spectral Normalization + Minibatch Discrimination \\
+        H & DCGAN & WGAN & Weight Clipping \\
+        I & DCGAN & WGAN-GP & Gradient Penalty \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Limitations}
+\label{sec:experiments_limitations}
+Unfortunately, training GANs is highly time and computation consuming. Therefore not all trainings are done until optimum. The trainings computed here are invariably done one Nvidia RTX 4090. Trainings that are taking several days are mostly partially splitted over a few days. However, even the comparison is quite complicated, because the metrics are biased to the dataset, therefore some of the metrics are only comparable on the same dataset and are not transferable. This is why I mostly used CelebA. Also a comparison of higher resolutions might be a future thing here due to the exponential growing computational cost. Wheras it might be pretty intersting to observe the quality and impact of all modules on higher reslutions. But this brings us to the next project~(future work diffusion models, to overcome a low resolution, but with the cost of extremely more computational power) Diffusion models. Up to now everything here might be obsolete, because it is a ongoing project, so don't expect much of it. 

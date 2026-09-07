@@ -1,0 +1,45 @@
+\section{Architectures}
+\label{sec:architectures}
+
+\subsection{Vanilla GAN}
+\label{sec:vanilla_gan}
+The beginning of this hopefully reasonably overview, will be the start of GANs with \textcite{goodfellow2014generative}, which might be the most influential paper about GANs. Shortly said, GANs consist of two neural networks working against each other to surpass the performance of the counterpart. One of the participants is the Generator that tries to generate data that resamples the original data. This procedure consists on the assumption that each dataset can be seen as a probability distribution. Following, this assumption the generator tries to learn the distribution of the dataset and can sample realistic looking images from the learned distribution. The Discriminators' objective is to distinguish whether real or generated data~(fake data) was fed into the discriminator. The Generator learns to fool the discriminator, while the discriminator has to learn to distinguish. Mathematically, this can be seen with expression:
+\begin{equation}
+\min_G \max_D V(D,G)
+=
+\mathbb{E}_{x \sim p_{\mathrm{data}}(x)}
+\left[\log D(x)\right]
++
+\mathbb{E}_{z \sim p_z(z)}
+\left[\log\left(1-D(G(z))\right)\right].
+\label{eq:vanilla_gan_equation}
+\end{equation}
+the objective of the discriminator is actually to maximize the probability of whether beeing real in the first term or zero in the second term. \\
+
+
+
+
+
+\subsection{DCGAN}
+\label{sec:dcgan}
+Based on the equations like \eqref{eq:vanilla_gan_equation}, DCGAN is equivalent in the computation but differ only in the architecture. DCGAN stands for \textit{Deep Convolutional GAN}, better said they are based on convolutional layers, thereby the ability to resample photo realistic images is increased. The invention of DCGAN was made by \textcite{radford2016dcgan}. Additionally, they found good hyperparameters to avoid instable training. New opportunities came across due to their convolutional nature. For instance, it became possible to use interpolation within the latent space, which makes it possible to linearly interpolate styles across a dataset. The main application from the paper invented interpolation with celebA to change semantic features of the faces. 
+% hier noch über architektur reden
+
+
+Since convolutional layers introduce an inductive bias while processing images the quality of the generated images increases. Unfortunately, the quality is still limited and the training process is also instable. 
+
+\subsection{Resnet-GAN}
+\label{sec:resnet_gan}
+Training deep networks is heavy, but with the rise of resnet, the ability of training became more possible. The speciality of resnet is the skip connection between the input of the layer and the output. Implementarily, the input is added to the output, so that the model only has to learn the difference, thus the gradient flow is more fluently. 
+
+\subsection{Conditional GAN}
+\label{sec:conditional_gan}
+
+\subsection{Super Resolution GAN}
+\label{sec:super_resolution_gan}
+
+\subsection{BigGAN}
+\label{sec:biggan}
+
+\subsection{Summary and Comparison}
+\label{sec:architectures_summary}

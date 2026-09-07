@@ -1,0 +1,74 @@
+\documentclass[11pt,a4paper]{article}
+
+%------------------------------------------------
+% Packages
+%------------------------------------------------
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\usepackage{csquotes}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{parskip}
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+% Figures and tables
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+
+% Code
+\usepackage{listings}
+
+% Links
+\usepackage{hyperref}
+
+% References
+\usepackage[
+    backend=biber,
+]{biblatex}
+
+\addbibresource{foundation/references/references.bib}
+
+\setstretch{1.08}
+
+
+% ------------------------------------------------
+% Document
+% ------------------------------------------------
+
+
+
+\begin{document}
+
+\title{Foundations of All Concepts Implemented in This Project}
+\author{Nicolas Becker}
+\date{\today}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\input{introduction.tex}
+\input{architectures.tex}
+\input{loss_functions.tex}
+\input{regularizers.tex}
+\input{experiments.tex}
+\input{training.tex}
+\input{summary.tex}
+\input{appendix.tex}
+
+\printbibliography
+\end{document}

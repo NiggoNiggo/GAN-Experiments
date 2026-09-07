@@ -1,0 +1,16 @@
+\section{Abstract}
+\label{sec:abstract}
+This project will cover several GAN
+
+\section{Introduction}
+\label{sec:introduction}
+In 2014 a certain type of generative models was invented by \textcite{goodfellow2014generative}, these new type of neural networks are called \textit{Generative Adversarial Networks}~(GANs). Compared to new generative models like \textbf{DALL-E} developed by Open-AI, which is based on \textit{Diffusion Models}~(These models will probably come also in a own project as soon as GANs are accomplished), their ability of creating diverse and realistic looking images is limited. This comes with the cost of relevance in modern applications. However, GANs are still used in a wide range of applications from data augmentation and self supervised learning. One of the biggest advantage still remains in the fast inference compared to the diffusion models. 
+
+
+\subsection{GAN Issues}
+\label{sec:gan_issues}
+% #non convergence
+Training GANs is inherently complex firstly due to their non convergence nature. This is easily seen by equation~\ref{eq:vanilla_gan_equation}, their objective is against each other. Therefore the training is instable and may not converge til a global minima. \\
+% mode colapse
+Secondly, due to their ability to be stuck in a local minima and only produce limited modes of the actual training data. The generator is only producing partiell parts of the training data. For instance, imagine that the generator is only producing the number 6 and 7 but not the others. Unfortunately, if the discriminator is not well trained only some nodes are sufficiently to fool the discriminator.This is called Mode colapse. \\
+% other problem
