@@ -3,8 +3,9 @@ training:
   args:
     out_shape: 64
     channels: 3
-    project_name : resnet_lsgan_mbd
+    project_name : deconv_mbd_fm
     save_path : /mnt/data2/gan_results
+    init : normal #orthogonal
     
 
 generator: 
@@ -13,20 +14,20 @@ generator:
     out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : resnet
+    block_type : deconv
 
 discriminator:
   name: dcgan
   args:
     out_shape: 64
     in_channels : 3
-    block_type : resnet
-    activation : none #Sigmoid
-    spectral_norm : true
+    block_type : deconv
+    activation : Sigmoid #Sigmoid
+    spectral_norm : false
     minibatch_discrimination : true
 
 loss:
-  name: lsgan
+  name: feature_matching
   label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
   # feature_matching # add lambda as hyperparameter
   lambda : 5

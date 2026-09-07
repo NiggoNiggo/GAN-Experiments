@@ -8,8 +8,9 @@ from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
 from testing.create_image import ConvGANImageSampler
 import torchvision.transforms as T
+from torchinfo import summary
 
-from architectures.init_weights import weights_init
+from architectures.init_weights import Initalizations
 from organization.file_system_organizer import FileOrganizer
 from observer.observer_save import ModelSaver
 from data.wrappers import DataWrapper
@@ -39,6 +40,7 @@ class GANTrainer(ABC):
         self.encode_config()
         self.init_project()
         self.get_params()
+        self.write_models()
         
     
     
@@ -104,8 +106,10 @@ class GANTrainer(ABC):
             print("Starte Training von Iteration 0.")
             self.num_iterations = 0
             self.epoch = 1
-            self.gen.apply(weights_init)
-            self.disc.apply(weights_init)
+            init = self.cfg["training"]["args"]["init"]
+
+            self.gen.apply(getattr(Initalizations, init))
+            self.disc.apply(getattr(Initalizations,init))
             return
         
         epoch_dirs = []
@@ -282,6 +286,47 @@ class GANTrainer(ABC):
         gen_params = sum([p.numel() for p in self.gen.parameters()])
         disc_params = sum([p.numel() for p in self.disc.parameters()])
         print(f"Generator parameters: {gen_params} | Discriminator parameters: {disc_params}")
+
+    def write_models(self):
+        """Funktion to visualize the models for debuging or a more clear overview of the implemented models
+        writes a file in the associated local project folder named models.txt
+        """
+        #define shapes 
+        bs = 1
+        img_size = self.cfg["training"]["args"]["out_shape"]
+        channels = self.cfg["training"]["args"]["channels"]
+        latent_dim = self.cfg["generator"]["args"]["latent_dim"]
+        #define max length
+        max_length = max(len(self.disc.model),len(self.gen.model))
+        #get summary of the discriminator
+        disc = summary(self.disc,input_size=(bs,channels,img_size,img_size), depth=max_length,
+                     col_names=[
+                        "input_size",
+                        "output_size",
+                        "num_params",
+                        "trainable",
+                                ],  
+                        )   
+        #get summary of the generator
+        gen = summary(self.gen,input_size=(bs,latent_dim,1,1), depth=max_length,
+                     col_names=[
+                        "input_size",
+                        "output_size",
+                        "num_params",
+                        "trainable",
+                                ],  
+                        )  
+        #where to save it
+        filename = os.path.join(self.project_path,"models.txt")
+        #actual saving
+        with open(filename,"w") as f:
+            f.write("Discriminator\n")
+            f.write(str(disc))
+            f.write("\n")
+            f.write("Generator\n")
+            f.write(str(gen))
+        print("Model are visualized in :",filename)
+        
 
     
         

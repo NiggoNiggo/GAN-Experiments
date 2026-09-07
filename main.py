@@ -32,7 +32,9 @@ if __name__ == "__main__":
     torch.set_num_threads(8) 
  
     # Call the Trainer
-    path = "wgan_config.yaml" #enter here the path of the desired GAN
+    path = "dcgan_config.yaml" #enter here the path of the desired GAN
+
+    # path = "/mnt/data2/gan_results/resnet_fm/config.yaml"
     config_path = os.path.join("param_configs",path)
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -41,7 +43,6 @@ if __name__ == "__main__":
     #register Training and calls the individual Trainer:
     trainer_cls = TRAINERS.get(cfg["training"]["name"])
     training = trainer_cls(cfg)
-    print(f"Loaded Trainer: {training}")
 
     save_path = os.path.join( cfg["training"]["args"]["save_path"], cfg["training"]["args"]["project_name"])
     #observer saves the models
