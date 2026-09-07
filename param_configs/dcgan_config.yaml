@@ -3,7 +3,7 @@ training:
   args:
     out_shape: 64
     channels: 3
-    project_name : dcgan_only 
+    project_name : resnet_lsgan_mbd
     save_path : /mnt/data2/gan_results
     
 
@@ -13,20 +13,20 @@ generator:
     out_shape : 64
     latent_dim: 100
     out_channels: 3
-    block_type : deconv
+    block_type : resnet
 
 discriminator:
   name: dcgan
   args:
     out_shape: 64
     in_channels : 3
-    block_type : deconv
-    activation : Sigmoid
-    spectral_norm : false
-    minibatch_discrimination : false
+    block_type : resnet
+    activation : none #Sigmoid
+    spectral_norm : true
+    minibatch_discrimination : true
 
 loss:
-  name: vanilla
+  name: lsgan
   label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
   # feature_matching # add lambda as hyperparameter
   lambda : 5
@@ -52,9 +52,9 @@ params:
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0002
-  logging_iterations : 1000
+  logging_iterations : 500
   iterations : 100000
   beta1 : 0.5
   beta2 : 0.99
-  n_crit : 1
+  n_crit : 5
 

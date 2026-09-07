@@ -1,0 +1,9 @@
+[0] Config.pm:307> INFO - This is Biber 2.19
+[0] Config.pm:310> INFO - Logfile is 'GANs.blg'
+[27] biber:340> INFO - === Sun Sep  6, 2026, 14:29:34
+[32] Biber.pm:419> INFO - Reading 'GANs.bcf'
+[54] Biber.pm:979> INFO - Found 2 citekeys in bib section 0
+[59] Biber.pm:4419> INFO - Processing section 0
+[62] Biber.pm:4610> INFO - Looking for bibtex file 'references/references.bibtex' for section 0
+[114] Utils.pm:399> ERROR - Cannot find 'references/references.bibtex'!
+[114] Biber.pm:136> INFO - ERRORS: 1
