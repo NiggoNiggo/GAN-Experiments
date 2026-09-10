@@ -1,8 +1,32 @@
 \section{Objective Functions}
 \label{sec:loss_functions}
 
-\subsection{Least Square Loss}
+\subsection{Least Square GAN}
 \label{sec:lsgan}
+In advance to to common GAN loss function lsgan tries to avoid the vanishing gradient problem occuring due to a lack of information retained by the discriminator. In other words if the discriminator becomes to good the gradients aren't useful for training. Since this lies in the nature of minimizing the Jenson-Shanon-Divergence, the authors argued that minimizing the pearson $x^2$ divergence, provide more plausible gradients for training. Invented was lsgan in 2017 by \textcite{Mao2016}. The authors claim a more stable training and generated images of higher quality. In figure~\ref{fig:theory_lsgan_loss} the issue of vanishing gradients is visualized. While the least squares shows a steady with values unlike zero the BCE shows clearly a loss of information in the positive section of the x-axis.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images_theory/comparison_loss_lsgan_vanilla.png}
+    \caption{Comparison of vanilla Binary Cross Entropy and Least Squares~\parencite{Mao2016}.}
+    \label{fig:theory_lsgan_loss}
+\end{figure}
+Accordingly, the loss function is adapted with the following equation:
+\begin{equation}
+% Discriminator Loss
+\mathcal{L}_D = \frac{1}{2} \mathbb{E}_{x \sim p_{\mathrm{data}}}\left[(D(x)-1)^2\right]
++
+\frac{1}{2}\mathbb{E}_{z \sim p_z}\left[D(G(z))^2\right]
+\end{equation}
+
+\begin{equation}
+% Generator Loss
+\mathcal{L}_G = \frac{1}{2}\mathbb{E}_{z \sim p_z}\left[(D(G(z))-1)^2\right]
+\end{equation}
+
+Unlike the BCE loss where samples that are correctly classified lose gradient information lsgan penalize even those samples. Moreover, lsgan pushes the samples toward the decision boundary, thus the generated samples lies near the manifold of real data. Additionally, the penalizing generates more gradient information even though for samples that are already correct classified~\parencite{Mao2016}.
+
 
 \subsection{Wasserstein GAN}
 \label{sec:wgan}

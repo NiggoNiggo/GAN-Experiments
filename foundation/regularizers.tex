@@ -3,16 +3,19 @@
 
 \subsection{Feature Matching}
 \label{sec:feature_matching}
-The idea is to condition the discriminator in rather distinguishing between real and fake data to match the features of a intermediate layer of the discriminator for real and fake data. 
+The idea is to condition the discriminator in rather distinguishing between real and fake data to match the features of a intermediate layer of the discriminator for real and fake data. This is implemented by changing the objective of the generator in matching the statistics of e.g. the last convolutional features from the real and the fake data. The mean of the features is taken and with L2-norm compared. The authors argue that empirically this provides better training mechanics. In particular, overtraining the generator is addressed. It is not proven to practically find a fixed point where the generator matches perfectly the training data. Whereas the fixed point should exists like in usual GAN training. However, the authors argue that feature matching is surprisingly effective in training GANs especially if the training is unstable~\parencite{Salimans2016}.
+%hier noch ein anderes Paper zu suchen
 
 \subsection{Minibatch-Discrimination}
 \label{sec:minibatch_discrimination}
+Another stabilizing technique proposed by \textcite{Salimans2016} is addressing the issue of mode collapsing, where the generator only produces samples that are almost identical. In conclusion, the generated images only resample a certain mode of the training data. The gradients of the discriminator points for different samples in a similar direction, which is believed to be correct by the discriminator. But the samples are classified independently, which lead to no coordination of gradient directions. To solve this \textcite{Salimans2016} proposed to rather look at a collection of images instead of just one by one. \\
+Essentially, for each image in the batch a learnable reprasentation is learned, which allows to compute a similarity between each sample in the batch. Afterwards, the similarity is multiplied by an exponential function to keep similar samples close to zero and vice versa. Mini batch discrimination can be seen as a new layer in the discriminator, which computes the similarity and concatenate this information with an intermediate layer for further processing. However, the discriminator outputs still a bool for real or false. For semi supervised learning this procedure showed best performance, with obtaining the best possible discriminator. The authors claim that this procedure is superior to feature matching because it quickly generates realistic appealing images~\parencite{Salimans2016}. 
 
 \subsection{Spectral Normalization}
 \label{sec:spectral_normalization}
 
-\subsection{Orthogonal Normalization}
-\label{sec:orthogonal_normalization}
+\subsection{Initializing Techniques}
+\label{sec:initializing_techniques}
 
 \subsection{Summary and Comparison}
 \label{sec:regularizers_summary}
