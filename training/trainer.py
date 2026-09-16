@@ -64,7 +64,6 @@ class GANTrainer(ABC):
         return batch_size, real, labels
     
     def train(self):
-        print(self.num_iterations, self.cfg["params"]["iterations"])
         train_duration = range(self.num_iterations, self.num_iterations + self.cfg["params"]["iterations"])
         print(f"Training for {len(train_duration)} iterations")
         for epoch in train_duration:
@@ -101,15 +100,17 @@ class GANTrainer(ABC):
     def init_models(self):
         print("..... init models .....")
         models_root = Path(self.save_path) / self.filename / "models"
+        init = self.cfg["training"]["args"]["init"]
         if not models_root.exists():
             print(f"Kein models-Ordner gefunden: {models_root}")
             print("Starte Training von Iteration 0.")
+            print(" No checkpoints found")
             self.num_iterations = 0
             self.epoch = 1
-            init = self.cfg["training"]["args"]["init"]
+            
 
             self.gen.apply(getattr(Initalizations, init))
-            self.disc.apply(getattr(Initalizations,init))
+            self.disc.apply(getattr(Initalizations, init))
             return
         
         epoch_dirs = []
@@ -126,8 +127,8 @@ class GANTrainer(ABC):
             print("Starte Training von Iteration 0.")
             self.num_iterations = 0
             self.epoch = 1
-            self.gen.apply(weights_init)
-            self.disc.apply(weights_init)
+            self.gen.apply(getattr(Initalizations, init))
+            self.disc.apply(getattr(Initalizations, init))
             return
 
         highest_iteration, latest_folder = max(epoch_dirs,key=lambda x: x[0])

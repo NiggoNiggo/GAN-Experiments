@@ -1,4 +1,4 @@
-from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDown, MiniBatchDiscrimination
+from .layers import ConvLayer, ConvTransposeLayer, ResNETLayerUp, ResNETLayerDown, MiniBatchDiscrimination, SelfAttention
 from core.registries import GENERATORS, DISCRIMINATORS
 from torch import nn
 import math
@@ -13,14 +13,12 @@ class DCGANGenerator(nn.Module):
                 out_channels:int,
                 latent_dim: int,
                 block_type:str,
-                activation:str="Tanh"):
+                attention_at:list):
         super().__init__()
         #num of layers to obtain 1x1 at the end with a given output shape
         #this only works for number 2^n
         num_layers = int(math.log2(out_shape)) - 1  
         start_channels = 2 ** (num_layers + 5)  
-
-        
 
         #creates list to save input dims and output dims respectively 
         in_dims = [start_channels // (2**i) for i in range(num_layers-1)]
@@ -53,8 +51,12 @@ class DCGANGenerator(nn.Module):
                     layer = ResNETLayerUp(in_dims[k], out_dims[k])
                 
             self.model.append(layer)
+            #add attention layer
+            if k in attention_at:
+                layer = SelfAttention(out_dims[k])
+                self.model.append(layer)
 
-        self.model.append(getattr(nn,activation)())
+        self.model.append(nn.Tanh())
         self.model = nn.Sequential(*self.model)
         
 
@@ -74,7 +76,8 @@ class DCGANDiscriminator(nn.Module):
                  block_type:str,
                  activation:str,
                  spectral_norm:bool,
-                 minibatch_discrimination:bool):
+                 minibatch_discrimination:bool,
+                 attention_at:list):
         super().__init__()
         self.model = []
         self.minibatch_discrimination = minibatch_discrimination
@@ -144,6 +147,9 @@ class DCGANDiscriminator(nn.Module):
                 self.model.append(mbd)
                 self.model.append(nn.Linear(in_features+100,1))
 
+            if k in attention_at:
+                layer = SelfAttention(out_dims[k])
+                self.model.append(layer)
 
         if activation.lower() != "none":
             activation = getattr(torch.nn, activation)()

@@ -148,3 +148,41 @@ class MiniBatchDiscrimination(nn.Module):
         o = similarity.sum(dim=1)
         x = torch.cat([x, o], dim=1)
         return x
+
+@BLOCKS.registry("self_attention")
+class SelfAttention(nn.Module):
+    def __init__(self,in_features):
+        super().__init__()
+        #scaling factor
+        self.k = 2
+        self.f = nn.Conv2d(in_features,in_features//self.k,1,bias=False)
+        self.g = nn.Conv2d(in_features,in_features//self.k,1,bias=False)
+
+        self.h = nn.Conv2d(in_features,in_features,1)
+        self.v = nn.Conv2d(in_features,in_features,1)
+        #learnable scalar factor
+        self.factor = nn.Parameter(torch.tensor(0.0))
+        
+
+    def forward(self,x):
+        # encode shape
+        B,C,W,H = x.shape
+        # spatial shape CxN
+        N = W * H
+        #feature spaces
+        f = self.f(x).view(B,C//self.k,N) #batch,channels,HxW
+        g = self.g(x).view(B,C//self.k,N)
+        #attention scores
+        s = f.transpose(1,2) @ g #Q^T @ K
+        #softmax for probabilities
+        scores = F.softmax(s,dim=1) #over N
+        # sum as input of self.v
+        in_v= scores @ self.h(x).view(B,C,N).transpose(1,2)
+        #reshape in_v
+        in_v = in_v.transpose(1, 2).view(B, C, H, W)
+        #out with in_v as argument of self.v
+        out = self.v(in_v)
+        # entire output 
+        y = self.factor * out + x
+        return y
+

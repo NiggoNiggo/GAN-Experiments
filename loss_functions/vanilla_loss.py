@@ -7,7 +7,7 @@ class VanillaGANLoss:
     def __init__(self,
                  label_smoothing=False):
         super().__init__()
-        self.loss = nn.BCELoss()
+        self.loss = nn.BCEWithLogitsLoss()
         self.label_smoothing = label_smoothing
 
     def disc_loss(self, real_pred, fake_pred):

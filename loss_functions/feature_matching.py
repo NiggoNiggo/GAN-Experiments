@@ -12,7 +12,7 @@ class FeatureMatching:
             label_smoothing (bool, optional): if label smoothing should be applied. Defaults to False.
         """
         super().__init__()
-        self.loss = torch.nn.BCELoss()
+        self.loss = torch.nn.BCEWithLogitsLoss()
         self.label_smoothing = label_smoothing
 
     def disc_loss(self,
@@ -57,5 +57,6 @@ class FeatureMatching:
         fake_mean = torch.mean(fake_features,dim=0)
         #additional adversarial loss
         feature_loss = torch.mean((real_mean - fake_mean) ** 2)
-        adv_loss = self.loss(fake_pred,torch.ones_like(fake_pred))
-        return adv_loss + 5 * torch.mean((real_mean-fake_mean)**2)
+        # adv_loss = self.loss(fake_pred,torch.ones_like(fake_pred))
+        # return adv_loss + 1 * feature_loss
+        return feature_loss
