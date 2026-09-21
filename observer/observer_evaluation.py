@@ -10,6 +10,7 @@ class Evaluate:
                  device):
         self.real_loader = dataloader
         self.num_samples = min(5000, len(dataloader.dataset))
+        self.batchsize = dataloader.batch_size
         #Cuda
         self.device = device
         # Metric instances
@@ -60,8 +61,8 @@ class Evaluate:
     @torch.inference_mode()
     def generate_fakes(self, gen, latent_dim):
         all_fakes = []
-        for _ in range(0, self.num_samples, 256):
-            current_bs = min(256,self.num_samples - sum(x.shape[0] for x in all_fakes))
+        for _ in range(0, self.num_samples, self.batchsize):
+            current_bs = min(self.batchsize,self.num_samples - sum(x.shape[0] for x in all_fakes))
             noise = torch.randn(current_bs,latent_dim,1,1,device=self.device)
             fake = gen(noise)
             all_fakes.append(fake.cpu())

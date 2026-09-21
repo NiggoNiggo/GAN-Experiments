@@ -23,12 +23,11 @@ class InceptionDistanceMeasures:
         dataloader,
         num_samples: int,
         device,
-        batch_size: int = 128,
     ):
         self.real_dataloader = dataloader
         self.num_samples = num_samples
         self.device = device
-        self.batch_size = batch_size
+        self.batch_size = dataloader.batch_size
 
         #frechèt Inception Score
         self.fid = FrechetInceptionDistance(

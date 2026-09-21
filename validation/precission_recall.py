@@ -16,7 +16,7 @@ class PrecisionAndRecall:
                 device):
         self.real_dataloader = torch.utils.data.DataLoader(
             dataloader.dataset,
-            batch_size=512,
+            batch_size=dataloader.batch_size,
             shuffle=False,
         )
         
@@ -76,7 +76,7 @@ class PrecisionAndRecall:
         #first compute the features
         real_features = self.real_features
         #compute fake features for the given fake samples
-        fake_features = self._compute_features(torch.utils.data.DataLoader(fake_data,batch_size=64,shuffle=True))
+        fake_features = self._compute_features(torch.utils.data.DataLoader(fake_data,batch_size=trainer.data_loader.batch_size,shuffle=True))
 
         #hier noch die shapes checken bevor das vollstädnig ist
         real_features = real_features.cpu().numpy()

@@ -154,12 +154,12 @@ class SelfAttention(nn.Module):
     def __init__(self,in_features):
         super().__init__()
         #scaling factor
-        self.k = 2
+        self.k = 8
         self.f = nn.Conv2d(in_features,in_features//self.k,1,bias=False)
         self.g = nn.Conv2d(in_features,in_features//self.k,1,bias=False)
 
-        self.h = nn.Conv2d(in_features,in_features,1)
-        self.v = nn.Conv2d(in_features,in_features,1)
+        self.h = nn.Conv2d(in_features,in_features,1,bias=False)
+        self.v = nn.Conv2d(in_features,in_features,1,bias=False)
         #learnable scalar factor
         self.factor = nn.Parameter(torch.tensor(0.0))
         
@@ -175,7 +175,7 @@ class SelfAttention(nn.Module):
         #attention scores
         s = f.transpose(1,2) @ g #Q^T @ K
         #softmax for probabilities
-        scores = F.softmax(s,dim=1) #over N
+        scores = F.softmax(s,dim=-1) #over N
         # sum as input of self.v
         in_v= scores @ self.h(x).view(B,C,N).transpose(1,2)
         #reshape in_v

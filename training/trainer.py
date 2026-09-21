@@ -231,6 +231,8 @@ class GANTrainer(ABC):
         return device
 
     def encode_config(self):
+        #training precission:
+        self.amp = self.cfg["params"]["amp"]
         #load the generator
         gen_cls = GENERATORS.get(self.cfg["generator"]["name"])
         self.gen = gen_cls(**self.cfg["generator"]["args"])
@@ -293,7 +295,7 @@ class GANTrainer(ABC):
         writes a file in the associated local project folder named models.txt
         """
         #define shapes 
-        bs = 1
+        bs = self.cfg["params"]["batchsize"]
         img_size = self.cfg["training"]["args"]["out_shape"]
         channels = self.cfg["training"]["args"]["channels"]
         latent_dim = self.cfg["generator"]["args"]["latent_dim"]

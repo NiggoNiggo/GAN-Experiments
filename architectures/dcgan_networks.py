@@ -13,7 +13,8 @@ class DCGANGenerator(nn.Module):
                 out_channels:int,
                 latent_dim: int,
                 block_type:str,
-                attention_at:list):
+                attention_at:list,
+                spectral_norm:bool):
         super().__init__()
         #num of layers to obtain 1x1 at the end with a given output shape
         #this only works for number 2^n
@@ -55,9 +56,11 @@ class DCGANGenerator(nn.Module):
             if k in attention_at:
                 layer = SelfAttention(out_dims[k])
                 self.model.append(layer)
-
+            
         self.model.append(nn.Tanh())
         self.model = nn.Sequential(*self.model)
+        if spectral_norm:
+            spectral_normalisation.apply_spectral_normalization(self.model)
         
 
     def forward(self, x):
