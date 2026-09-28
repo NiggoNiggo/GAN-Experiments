@@ -13,6 +13,7 @@ generator:
   args: 
     out_shape : 64
     latent_dim: 100
+    ch_multiplier : 2
     out_channels: 3
     block_type : resnet
     attention_at : [2]
@@ -23,6 +24,7 @@ discriminator:
   args:
     out_shape: 64
     in_channels : 3
+    ch_multiplier : 2
     block_type : resnet
     activation : none #Sigmoid  #change bce with bce with logits
     spectral_norm : true
@@ -40,9 +42,10 @@ augmentation:
     kaka: 
 
 dataset:
-  name : general
+  name : ImageNet
   # data_path : /mnt/data2/datasets/lsun/train
-  data_path : /mnt/data2/datasets/celebA/img_align_celeba
+  data_path : /mnt/data2/datasets/ImageNet
+  return_labels : false
 
 metrics : 
   fid : fid
@@ -54,9 +57,9 @@ params:
   batchsize: 128
   num_workers : 10
   latent_dim : 100
-  lr_disc: 0.0001
-  lr_gen : 0.0004
-  logging_iterations : 100
+  lr_disc: 0.0004
+  lr_gen : 0.0001
+  logging_iterations : 500
   iterations : 100000
   beta1 : 0.0
   beta2 : 0.9

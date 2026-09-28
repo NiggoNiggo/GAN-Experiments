@@ -11,6 +11,7 @@ class DCGANGenerator(nn.Module):
     def __init__(self,
                  out_shape:int, 
                 out_channels:int,
+                ch_multiplier:int,
                 latent_dim: int,
                 block_type:str,
                 attention_at:list,
@@ -19,12 +20,17 @@ class DCGANGenerator(nn.Module):
         #num of layers to obtain 1x1 at the end with a given output shape
         #this only works for number 2^n
         num_layers = int(math.log2(out_shape)) - 1  
-        start_channels = 2 ** (num_layers + 5)  
+        start_channels = 2 ** (num_layers + 3) * ch_multiplier
+        
 
         #creates list to save input dims and output dims respectively 
-        in_dims = [start_channels // (2**i) for i in range(num_layers-1)]
+        in_dims = [int(start_channels // (2**i) ) for i in range(num_layers-1)] 
         out_dims = in_dims[1:] + [out_channels]
 
+        # print("num layers: ", num_layers)
+        # print("channels at start: ", start_channels)
+        # print("dims in: ", in_dims)
+        # print("dims out: ", out_dims)
         #linear mapping network
         self.linear_mapping = nn.Linear(latent_dim,in_dims[0]*4*4)
 
@@ -76,6 +82,7 @@ class DCGANDiscriminator(nn.Module):
     def __init__(self,
                  out_shape:int,
                  in_channels:int,
+                 ch_multiplier:str,
                  block_type:str,
                  activation:str,
                  spectral_norm:bool,
@@ -87,8 +94,12 @@ class DCGANDiscriminator(nn.Module):
         #computes the amount of layers to append to the desired out shape
         num_layers = int(math.log2(out_shape)) -1
         #create the in dimensions with start 64 and increase the power of 2
-        in_dims = [in_channels] + [2**(6+n) for n in range(num_layers-1)]
-        out_dims = [2**(6+n) for n in range(num_layers-1)] + [1]
+        in_dims = [in_channels] + [2**(4+n) * ch_multiplier for n in range(num_layers-1)]
+        out_dims = [2**(4+n) * ch_multiplier for n in range(num_layers-1)] + [1]
+        # print("Disc")
+        # print("num layers: ", num_layers)#
+        # print("dims in: ", in_dims)
+        # print("dims out: ", out_dims)
         
         #assert that in and out dims have the same amout of values
         assert len(in_dims) == len(out_dims)
@@ -195,7 +206,7 @@ if __name__ == "__main__":
     channels = 3
     z = torch.randn((64,100,1,1))
     out_shape = 32
-    gen = DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100,block_type="resnet")
+    gen = DCGANGenerator(out_shape=out_shape,out_channels=channels,latent_dim=100,block_type="resnet",attention_at=[1],spectral_norm=False,ch_multiplier=4)
     fake = gen(z)
     print(f"Z: {z.shape}, Fake: {fake.shape}")
     # Testing the Discriminator
@@ -203,8 +214,8 @@ if __name__ == "__main__":
     
     # in_dims = [channels,64,128,256]
     # out_dims = [64,128,256,1]
-    disc = DCGANDiscriminator(out_shape=out_shape,in_channels=channels,block_type="resnet",activation="Sigmoid")
-    print(disc)
+    disc = DCGANDiscriminator(out_shape=out_shape,in_channels=channels,block_type="resnet",activation="None",spectral_norm=False,minibatch_discrimination=False,attention_at=[1],ch_multiplier=4)
+    # print(disc)
     noise = torch.randn((64,channels,out_shape,out_shape))
     print("Noise ", noise.shape)
     
@@ -212,7 +223,7 @@ if __name__ == "__main__":
     
     print(f"Fake shape: {fake.shape}, Disc Out shape: {disc_out.shape}")
 
-    print(gen)
+    # print(gen)
 
 
   

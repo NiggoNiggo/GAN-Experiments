@@ -1,5 +1,6 @@
 import torch
 
+
 class DataWrapper(torch.utils.data.Dataset):
     def __init__(self, dataset, has_labels):
         self.dataset = dataset
@@ -10,8 +11,11 @@ class DataWrapper(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         sample = self.dataset[idx]
+
         if self.has_labels:
             x, y = sample
             return {"x": x, "y": y}
-        else:
-            return {"x": sample}
+
+        if isinstance(sample, tuple):
+            return {"x": sample[0]}
+        return {"x": sample}

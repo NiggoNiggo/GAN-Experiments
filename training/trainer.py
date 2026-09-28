@@ -263,7 +263,11 @@ class GANTrainer(ABC):
 
         #prepare dataset:
         data_cls = DATASETS.get(self.cfg["dataset"]["name"])
-        dataset = data_cls(self.cfg["dataset"]["data_path"],transform)
+        dataset = data_cls(
+            self.cfg["dataset"]["data_path"],
+            transform,
+            return_labels=self.cfg["params"]["has_labels"],
+        )
 
         #make dataloader ready
         self.data_loader=torch.utils.data.DataLoader(

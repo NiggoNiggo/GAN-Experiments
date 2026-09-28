@@ -10,7 +10,8 @@ from core.registries import DATASETS
 class GeneralSet(torch.utils.data.Dataset):
     def __init__(self,
                  path:str,
-                 transforms):
+                 transforms,
+                 return_labels:bool=False):
         self.transforms = transforms
         self.path = path
         self.data = []
