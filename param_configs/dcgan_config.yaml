@@ -1,9 +1,9 @@
 training:
   name: dcgan
   args:
-    out_shape: 256
+    out_shape: 64
     channels: 3
-    project_name : resnet_sm_orthogonal_attention_256
+    project_name : test_again
     save_path : /mnt/data2/gan_results
     init : orthogonal #orthogonal
     
@@ -11,17 +11,17 @@ training:
 generator: 
   name: dcgan
   args: 
-    out_shape : 256
+    out_shape : 64
     latent_dim: 100
     out_channels: 3
     block_type : resnet
-    attention_at : [3]
+    attention_at : [2]
     spectral_norm : true
 
 discriminator:
   name: dcgan
   args:
-    out_shape: 256
+    out_shape: 64
     in_channels : 3
     block_type : resnet
     activation : none #Sigmoid  #change bce with bce with logits
@@ -30,8 +30,8 @@ discriminator:
     attention_at : [1]
 
 loss:
-  name: hinge
-  label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
+  name: vanilla
+  label_smoothing : true #only useful with normal vanilla loss -> name : vanilla, 
   # feature_matching # add lambda as hyperparameter
   lambda : 5
 
@@ -51,15 +51,16 @@ metrics :
   
 params:
   has_labels : false
-  batchsize: 8
+  batchsize: 128
   num_workers : 10
   latent_dim : 100
   lr_disc: 0.0001
   lr_gen : 0.0004
-  logging_iterations : 500
+  logging_iterations : 100
   iterations : 100000
   beta1 : 0.0
   beta2 : 0.9
-  n_crit : 5
+  n_crit : 1
   amp : false
+
 

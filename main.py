@@ -45,9 +45,6 @@ if __name__ == "__main__":
     training = trainer_cls(cfg)
 
     save_path = os.path.join( cfg["training"]["args"]["save_path"], cfg["training"]["args"]["project_name"])
-    #observer saves the models
-    training.attach(ModelSaver(save_path=save_path))
-    
    
     #observer evaluate 
     evaluater = Evaluate(training.data_loader,training.device)
@@ -57,6 +54,8 @@ if __name__ == "__main__":
     training.attach(evaluater)
      #observer write the csv file for plotting and statistics
     training.attach(PlotObserver())
+    #observer saves the models
+    training.attach(ModelSaver(save_path=save_path))
     #observer to produce some images for visual guidance
     training.attach(PlotLatentGANsObserver(num_images=64))
     #starting training
