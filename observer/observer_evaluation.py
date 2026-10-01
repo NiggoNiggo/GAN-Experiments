@@ -9,7 +9,7 @@ class Evaluate:
                  dataloader,
                  device):
         self.real_loader = dataloader
-        self.num_samples = min(5000, len(dataloader.dataset))
+        self.num_samples = min(50000, len(dataloader.dataset))
         self.batchsize = dataloader.batch_size
         #Cuda
         self.device = device

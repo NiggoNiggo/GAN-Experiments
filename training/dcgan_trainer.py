@@ -65,4 +65,7 @@ class DCGANTrainer(GANTrainer):
 
         return d_loss, g_loss
     
-    
+
+
+
+#seeds einbauen, damit ich es besser vergleichen kann und auch einbauen, dass Bilder immer mit den selben Seeds erzeugt werden, damit man die Ergebnisse besser vergleichen kann.
