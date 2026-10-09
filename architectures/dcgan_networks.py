@@ -20,7 +20,7 @@ class DCGANGenerator(nn.Module):
         #num of layers to obtain 1x1 at the end with a given output shape
         #this only works for number 2^n
         num_layers = int(math.log2(out_shape)) - 1  
-        start_channels = 2 ** (num_layers + 3) * ch_multiplier
+        start_channels = 2 ** (num_layers + 4) * ch_multiplier
         
 
         #creates list to save input dims and output dims respectively 
@@ -52,18 +52,20 @@ class DCGANGenerator(nn.Module):
                 if k == len(in_dims)-1:
                     layer = nn.Sequential(
                         ResNETLayerUp(in_dims[k], in_dims[k]),
-                        nn.Conv2d(in_dims[k], out_dims[k], kernel_size=3, padding=1)
+                        nn.Conv2d(in_dims[k], out_dims[k], kernel_size=3, padding=1),
+                        nn.Tanh()
                     )
                 else:
                     layer = ResNETLayerUp(in_dims[k], out_dims[k])
                 
             self.model.append(layer)
-            #add attention layer
-            if k in attention_at:
-                layer = SelfAttention(out_dims[k])
-                self.model.append(layer)
             
-        self.model.append(nn.Tanh())
+            #add attention layer
+            if isinstance(attention_at,list):
+                if k in attention_at:
+                    layer = SelfAttention(out_dims[k])
+                    self.model.append(layer)
+        # self.model.append(nn.Tanh())
         self.model = nn.Sequential(*self.model)
         if spectral_norm:
             spectral_normalisation.apply_spectral_normalization(self.model)
@@ -94,8 +96,8 @@ class DCGANDiscriminator(nn.Module):
         #computes the amount of layers to append to the desired out shape
         num_layers = int(math.log2(out_shape)) -1
         #create the in dimensions with start 64 and increase the power of 2
-        in_dims = [in_channels] + [2**(4+n) * ch_multiplier for n in range(num_layers-1)]
-        out_dims = [2**(4+n) * ch_multiplier for n in range(num_layers-1)] + [1]
+        in_dims = [in_channels] + [2**(6+n) * ch_multiplier for n in range(num_layers-1)]
+        out_dims = [2**(6+n) * ch_multiplier for n in range(num_layers-1)] + [1]
         # print("Disc")
         # print("num layers: ", num_layers)#
         # print("dims in: ", in_dims)
@@ -115,7 +117,8 @@ class DCGANDiscriminator(nn.Module):
                         kernel_size=4,
                         stride=1 if is_last else 2,
                         padding=0 if is_last else 1,
-                        batch_norm=False #(k > 0)
+                        batch_norm=False,#(k > 0),
+                        activation=False
                     )
                 elif block_type == "resnet":
                     if is_last:
@@ -160,10 +163,10 @@ class DCGANDiscriminator(nn.Module):
                 self.model.append(nn.Flatten())
                 self.model.append(mbd)
                 self.model.append(nn.Linear(in_features+100,1))
-
-            if k in attention_at:
-                layer = SelfAttention(out_dims[k])
-                self.model.append(layer)
+            if isinstance(attention_at,list):
+                if k in attention_at:
+                    layer = SelfAttention(out_dims[k])
+                    self.model.append(layer)
 
         if activation.lower() != "none":
             activation = getattr(torch.nn, activation)()
@@ -174,10 +177,14 @@ class DCGANDiscriminator(nn.Module):
             spectral_normalisation.apply_spectral_normalization(self.model)
 
         #find last layer with conv for features for feature matching
+        layer_count = 0
         for module in reversed(list(self.model.modules())):
-            if isinstance(module, nn.Conv2d):
-                self.feature_layer = module
-                break
+            if isinstance(module, ResNETLayerDown)or isinstance(module,ConvLayer):
+                layer_count += 1
+                if layer_count == 1:
+                    self.feature_layer = module
+                    break
+        # self.feature_layer = self.model[-2]
         
         self.features = None
 

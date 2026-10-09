@@ -24,7 +24,8 @@ class ConvLayer(nn.Module):
                  kernel_size,
                  stride,
                  padding,
-                 batch_norm:bool=True):
+                 batch_norm:bool=True,
+                 activation:bool=True):
         super().__init__()
 
         self.model = [
@@ -34,7 +35,8 @@ class ConvLayer(nn.Module):
         if batch_norm:
             self.model.append(nn.BatchNorm2d(output_dim))
         #add activation to each layer except the last
-        self.model.append(nn.LeakyReLU(0.2,inplace=True))
+        if activation:
+            self.model.append(nn.LeakyReLU(0.2,inplace=True))
         #combine to sequential object 
         self.model = nn.Sequential(*self.model)
         
@@ -70,7 +72,8 @@ class ResNETLayerUp(nn.Module):
     def __init__(self,
                  in_channels:int,
                  out_channels:int,
-                 batch_norm:bool=True):
+                 batch_norm:bool=True,
+                 last_layer:bool=False):
         super().__init__()
 
         layers = []
@@ -79,41 +82,47 @@ class ResNETLayerUp(nn.Module):
         layers.extend([nn.ReLU(),
                               nn.Upsample(scale_factor=2,mode="nearest"),])
 
-        layers.append(nn.Conv2d(in_channels,out_channels,3,stride=1,padding=1))
+        layers.append(nn.Conv2d(in_channels,out_channels,3,stride=1,padding=1,bias=False))
         if batch_norm:
             layers.append(nn.BatchNorm2d(out_channels))
         layers.extend([nn.ReLU(),
-                                  nn.Conv2d(out_channels,out_channels,3,stride=1, padding=1)])
-
+                                  nn.Conv2d(out_channels,out_channels,3,stride=1, padding=1,bias=False)])
+        if last_layer:
+            self.model.append(nn.Tanh())
         self.model = nn.Sequential(*layers)
 
-        self.skip = nn.Conv2d(in_channels,out_channels,1)
+        self.skip = nn.Sequential(*[
+            nn.Upsample(scale_factor=2, mode="nearest"),
+            nn.Conv2d(in_channels,out_channels,1,bias=False)
+        ])
+        
 
     def forward(self,x):
-        return F.interpolate(self.skip(x),scale_factor=2,mode="nearest") + self.model(x)
+        return self.skip(x) + self.model(x)
 
 @BLOCKS.registry("resnet_down")
 class ResNETLayerDown(nn.Module):
     def __init__(self,
                  in_channels:int,
                  out_channels:int,
-                 batch_norm:bool=True):
+                 batch_norm:bool=True,
+                 ): #acitvation?True?
         super().__init__()
         layers = []
         if batch_norm:
             layers.append(nn.BatchNorm2d(in_channels))
-        layers.append(nn.Conv2d(in_channels,out_channels,3,stride=1,padding=1))
+        layers.append(nn.Conv2d(in_channels,out_channels,3,stride=1,padding=1,bias=False))
         layers.append(nn.LeakyReLU(0.2))
         
         if batch_norm:
             layers.append(nn.BatchNorm2d(out_channels))
+            layers.append(nn.LeakyReLU(0.2))
 
-        layers.append(nn.LeakyReLU(0.2))
-        layers.append(nn.Conv2d(out_channels,out_channels,3,stride=1, padding=1))
+        layers.append(nn.Conv2d(out_channels,out_channels,3,stride=1, padding=1,bias=False))
         layers.append(nn.AvgPool2d(2))
         self.model = nn.Sequential(*layers)
 
-        self.skip = nn.Conv2d(in_channels,out_channels,1,stride=2)
+        self.skip = nn.Conv2d(in_channels,out_channels,1,stride=2,bias=False)
 
     def forward(self,x):
         return self.skip(x) + self.model(x)

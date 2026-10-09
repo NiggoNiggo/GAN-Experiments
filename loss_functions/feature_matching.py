@@ -53,7 +53,7 @@ class FeatureMatching:
         Returns:
             torch.tensor: Generator loss 
         """
-        real_mean = torch.mean(real_features,dim=0)
+        real_mean = torch.mean(real_features.detach(),dim=0)
         fake_mean = torch.mean(fake_features,dim=0)
         #additional adversarial loss
         feature_loss = torch.mean((real_mean - fake_mean) ** 2)

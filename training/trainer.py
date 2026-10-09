@@ -1,18 +1,14 @@
-import os
-import re
-import yaml
+import os, re, yaml, torch, random
+import numpy as np
 from core.registries import *
 from pathlib import Path
-import torch
 from abc import ABC, abstractmethod
 from tqdm.auto import tqdm
-from testing.create_image import ConvGANImageSampler
 import torchvision.transforms as T
 from torchinfo import summary
 
 from architectures.init_weights import Initalizations
 from organization.file_system_organizer import FileOrganizer
-from observer.observer_save import ModelSaver
 from data.wrappers import DataWrapper
 from core.optimizer_factory import AdamStrategy
 
@@ -26,21 +22,13 @@ class GANTrainer(ABC):
                ):
         #load this config if the project exists and params need to be changed in the folder yaml file then
         self.cfg = config
-    
-        
+        #set a random seed, for reproducabillity 
+        self.set_seed(self.cfg["params"]["seed"])
         #observers for further functionality
         self.observers = []
-        #initilaize the model whehter normal distributed or with loading a filename
-        self.filename = self.cfg["training"]["args"]["project_name"]
-        self.save_path = self.cfg["training"]["args"]["save_path"]
-        self.project_path = os.path.join(self.save_path,self.filename)
-        self.latent_dim = self.cfg["params"]["latent_dim"]
-        #filename comes from search from organizer and the filesystem
-        self.device = self._get_device()
-        self.encode_config()
-        self.init_project()
-        self.get_params()
-        self.write_models()
+        self.init_trainer()
+        self.generate_fixed_noise(self.cfg)
+        
         
     
     
@@ -82,6 +70,9 @@ class GANTrainer(ABC):
                     self.notify(info)
                     #just print some informations every 1000 Iterations
                     tqdm.write(f"Iterations {self.num_iterations}: D={d_loss:.10f} | G={g_loss:.10f}")
+            if self.cfg["params"]["iterations"] <= epoch:
+                print(f"Stop Training after {epoch}s")
+                
             
 
     def init_project(self):
@@ -98,8 +89,12 @@ class GANTrainer(ABC):
 
 
     def init_models(self):
-        print("..... init models .....")
-        models_root = Path(self.save_path) / self.filename / "models"
+        models_root = (
+            Path(self.cfg["training"]["args"]["save_path"])
+            / self.cfg["training"]["args"]["project_name"]
+            / "models"
+        )
+        print(models_root)
         init = self.cfg["training"]["args"]["init"]
         if not models_root.exists():
             print(f"Kein models-Ordner gefunden: {models_root}")
@@ -117,7 +112,7 @@ class GANTrainer(ABC):
         for folder in models_root.iterdir():
             if not folder.is_dir():
                 continue
-            match = re.match(r"iteration_(\d+)k?$", folder.name)
+            match = re.match(r"iteration_(\d+)k?", folder.name)
             if match:
                 iteration = int(match.group(1))
                 epoch_dirs.append((iteration, folder))
@@ -134,9 +129,6 @@ class GANTrainer(ABC):
         highest_iteration, latest_folder = max(epoch_dirs,key=lambda x: x[0])
         self.num_iterations = highest_iteration
         self.epoch = highest_iteration + 1
-        print()
-        print("========================================")
-        print("CHECKPOINT GEFUNDEN")
         print("========================================")
         print(f"Checkpoint: {latest_folder}")
         print(f"Iteration:  {highest_iteration}")
@@ -188,9 +180,6 @@ class GANTrainer(ABC):
                 f"Discriminator Optimizer checkpoint nicht gefunden:\n"
                 f"{optimizer_disc_file}"
             )
-        print()
-        print("========================================")
-        print("TRAINING WIRD FORTGESETZT")
         print("========================================")
         print(f"Start iteration:    {self.num_iterations}")
         print(f"Generator:          {generator_file}")
@@ -198,6 +187,20 @@ class GANTrainer(ABC):
         print(f"Generator Optimizer: {optimizer_gen_file}")
         print(f"Discriminator Optimizer: {optimizer_disc_file}")
         print("========================================")
+
+    def init_trainer(self):
+        #initilaize the model whehter normal distributed or with loading a filename
+        self.filename = self.cfg["training"]["args"]["project_name"]
+        self.save_path = self.cfg["training"]["args"]["save_path"]
+        self.project_path = os.path.join(self.save_path,self.filename)
+        self.latent_dim = self.cfg["params"]["latent_dim"]
+        #filename comes from search from organizer and the filesystem
+        self.device = self._get_device()
+        self.encode_config()
+        self.init_project()
+        self.get_params()
+        self.write_models()
+
 
     def sample_images(self, num_img=64):
         imgs = self.plotter.sample_images(num_img)
@@ -252,14 +255,9 @@ class GANTrainer(ABC):
             self.loss_fn = loss(label_smoothing)
         else:
             self.loss_fn = loss()
-        
-        #load the data
-        transform = T.Compose([
-        T.Resize((self.cfg["training"]["args"]["out_shape"], 
-                        self.cfg["training"]["args"]["out_shape"])),      
-        T.ToTensor(),             
-        T.Normalize((0.5,), (0.5,), (0.5,))  
-        ])
+
+        #preparate augmentation from config
+        transform = self.decode_augmentation(self.cfg)
 
         #prepare dataset:
         data_cls = DATASETS.get(self.cfg["dataset"]["name"])
@@ -333,7 +331,62 @@ class GANTrainer(ABC):
             f.write("Generator\n")
             f.write(str(gen))
         print("Model are visualized in :",filename)
-        
 
-    
+    @staticmethod
+    def set_seed(seed:int=None):
+        """Uses a fixed seed to make the training deterministic. This applies to cuda, math, torch and numpy.
+        if None then no seed is set.
+
+        Args:
+            seed (int) default None: seed
+        """
+        if seed:
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
+            np.random.seed(seed)
+            torch.cuda.manual_seed_all(seed)
+            random.seed(seed)
+
+
+    @staticmethod
+    def generate_fixed_noise(cfg):
+        """Method to create a fixed noise to generate a constantly fixed noise that will be used for evaluate the visual quality.
+        All generated images in the project folder *fakes* are saved there. This comparison enable fair comparison of quality improves over the iterations.
+        To all extend with self.set_seed(int) the quality of different trainings can be verified in image quality, since each noise is equally and a fixed noise is used for visual comparison.
         
+                Args:
+                    seed (int): _description_
+                """
+        if os.path.exists("fixed_noise.pt"):
+            # print("Fixed noise already exists")
+            return
+        else:
+            fixed_z = torch.randn(16,cfg["params"]["latent_dim"],1,1)
+            torch.save(fixed_z, "fixed_noise.pt")
+            # print("Fixed noise is created")
+            return 
+        
+    @staticmethod
+    def decode_augmentation(cfg):
+        #augmentaions for each sample not influenciable
+        out_shape = cfg["training"]["args"]["out_shape"]
+        #Resize image to desired width and hight
+        resize = T.Resize((out_shape,out_shape))
+        center_crop = T.CenterCrop(out_shape)
+        to_tensor = T.ToTensor()          
+        normalize = T.Normalize(
+                                [0.5, 0.5, 0.5],
+                                [0.5, 0.5, 0.5]
+                                )
+        prev_augs = [resize,to_tensor,normalize,center_crop]
+        #additional controllable augmentations from config
+        for aug,val in cfg["augmentation"].items():
+            if isinstance(val,dict):
+                prev_augs.append(getattr(T,aug)(**val))
+            else:
+                prev_augs.append(getattr(T,aug)(val))
+
+
+        transform = T.Compose(prev_augs)
+        return transform
+

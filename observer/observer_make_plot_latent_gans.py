@@ -12,7 +12,12 @@ class PlotLatentGANsObserver(Observer):
         iterations= info["num_iterations"]
         trainer = info["trainer"]
         self.plotter = ConvGANImageSampler(trainer.gen,trainer.latent_dim)
-        imgs = self.plotter.sample_images(self.num_images)
+        # imgs = self.plotter.sample_images(self.num_images)
+        #load fixed noise
+        noises = torch.load("fixed_noise.pt",weights_only=True).cuda()
+        trainer.gen.eval()
+        imgs = trainer.gen(noises)
+        trainer.gen.train()
         self.plotter.plot_images_grid(imgs, num_img=self.num_images, nrow=8,filename=os.path.join(trainer.save_path,trainer.filename,"fake",f"num_iterations_{iterations//1000}k.png"))
 
         

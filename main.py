@@ -57,7 +57,7 @@ if __name__ == "__main__":
     #observer saves the models
     training.attach(ModelSaver(save_path=save_path))
     #observer to produce some images for visual guidance
-    training.attach(PlotLatentGANsObserver(num_images=64))
+    training.attach(PlotLatentGANsObserver())
     #starting training
     training.train()
 

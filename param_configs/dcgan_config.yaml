@@ -3,7 +3,7 @@ training:
   args:
     out_shape: 128
     channels: 3
-    project_name : imgenet_128_sagan
+    project_name : test_seed1
     save_path : /mnt/data2/gan_results
     init : orthogonal #orthogonal
     
@@ -12,8 +12,8 @@ generator:
   name: dcgan
   args: 
     out_shape : 128
-    latent_dim: 100
-    ch_multiplier : 4
+    latent_dim: 128
+    ch_multiplier : 1
     out_channels: 3
     block_type : resnet
     attention_at : [1]
@@ -24,27 +24,28 @@ discriminator:
   args:
     out_shape: 128
     in_channels : 3
-    ch_multiplier : 4
+    ch_multiplier : 1
     block_type : resnet
     activation : none #Sigmoid  #change bce with bce with logits
     spectral_norm : true
     minibatch_discrimination : false
-    attention_at : [2]
+    attention_at : [2] #3#f #o
 
 loss:
-  name: hinge
+  name: feature_matching
   label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
-  # feature_matching # add lambda as hyperparameter
-  lambda : 5
+  regularizer : fm # extend to use fm as regularizer 
 
 augmentation:
-  args:
-    kaka: 
-
+    # RandomHorizontalFlip:  0.01
+    RandomRotation : 5
+    # ColorJitter :
+      # brightness : 0.2
+      # hue : 0.05
 dataset:
-  name : ImageNet
+  name : celebA
   # data_path : /mnt/data2/datasets/lsun/train
-  data_path : /mnt/data2/datasets/ImageNet
+  data_path : /mnt/data2/datasets/celebAHQ
   return_labels : false
 
 metrics : 
@@ -53,17 +54,20 @@ metrics :
 
   
 params:
+  seed : 117 # random seed
   has_labels : false
   batchsize: 128
   num_workers : 10
-  latent_dim : 100
+  latent_dim : 128
   lr_disc: 0.0004
-  lr_gen : 0.0001
+  lr_gen : 0.0002
   logging_iterations : 1000
-  iterations : 100000
-  beta1 : 0.0
-  beta2 : 0.9
+  iterations : 200000
+  beta1 : 0.5
+  beta2 : 0.999
   n_crit : 1
   amp : false
+# lr scheduler einbauen
 
 
+# ohne self attention nochmal trainieren
