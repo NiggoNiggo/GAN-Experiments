@@ -1,9 +1,9 @@
 training:
   name: dcgan
   args:
-    out_shape: 128
+    out_shape: 64
     channels: 3
-    project_name : test_seed1
+    project_name : dcgan_ortho_64_resnet_sn_hinge
     save_path : /mnt/data2/gan_results
     init : orthogonal #orthogonal
     
@@ -11,7 +11,7 @@ training:
 generator: 
   name: dcgan
   args: 
-    out_shape : 128
+    out_shape : 64
     latent_dim: 128
     ch_multiplier : 1
     out_channels: 3
@@ -22,7 +22,7 @@ generator:
 discriminator:
   name: dcgan
   args:
-    out_shape: 128
+    out_shape: 64
     in_channels : 3
     ch_multiplier : 1
     block_type : resnet
@@ -32,7 +32,7 @@ discriminator:
     attention_at : [2] #3#f #o
 
 loss:
-  name: feature_matching
+  name: hinge
   label_smoothing : false #only useful with normal vanilla loss -> name : vanilla, 
   regularizer : fm # extend to use fm as regularizer 
 
@@ -61,7 +61,7 @@ params:
   latent_dim : 128
   lr_disc: 0.0004
   lr_gen : 0.0002
-  logging_iterations : 1000
+  logging_iterations : 5000
   iterations : 200000
   beta1 : 0.5
   beta2 : 0.999
